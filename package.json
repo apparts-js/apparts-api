@@ -19,6 +19,7 @@
   "author": "Philipp Uhl",
   "license": "UNLICENSED",
   "dependencies": {
-    "apparts-config": "git+ssh://git@ph-uhl.com:Apparts/apparts-config.git#semver:^1.0.3"
+    "apparts-config": "git+ssh://git@ph-uhl.com:Apparts/apparts-config.git#semver:^1.0.3",
+    "base-64": "^0.1.0"
   }
 }
