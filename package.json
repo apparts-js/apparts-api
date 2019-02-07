@@ -1,0 +1,24 @@
+{
+  "name": "apparts-frontend-api",
+  "version": "1.0.0",
+  "description": "Offers a unified set of api-stuff",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@ph-uhl.com:Apparts/apparts-frontend-api.git"
+  },
+  "keywords": [
+    "apparts",
+    "api",
+    "frontend",
+    "network"
+  ],
+  "author": "Philipp Uhl",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "apparts-config": "git+ssh://git@ph-uhl.com:Apparts/apparts-config.git#semver:^1.0.3"
+  }
+}

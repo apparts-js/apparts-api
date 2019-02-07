@@ -1,0 +1,7 @@
+#+TITLE: Frontend-API
+#+DATE: [2019-02-07 Thu]
+#+AUTHOR: Philipp Uhl
+
+* Usage
+
+Requires the configuration =api= with the key =url=.
