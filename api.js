@@ -1,4 +1,3 @@
-import * as lang from '../lang';
 import * as network from './network.js';
 
 let myStore;
