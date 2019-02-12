@@ -1,6 +1,6 @@
 {
   "name": "apparts-frontend-api",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Offers a unified set of api-stuff",
   "main": "index.js",
   "scripts": {

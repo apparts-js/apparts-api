@@ -39,17 +39,27 @@ export const get = (url, auth) => {
 };
 
 
+let defaultErrorDispatcher;
 const _dispatchError = h => {
   if(typeof h === 'object'){
     console.log(h.title, h.text, h.buttons);
+    defaultErrorDispatcher && defaultErrorDispatcher(h);
   } else {
-    h();
+    defaultErrorDispatcher && defaultErrorDispatcher({title: h});
   }
 };
 
 const _defaultErrorHandlers = {
-  401: () => {
+/*  401: () => {
     // do something
+  }*/
+};
+
+export const setErrorHandler = (h, code) => {
+  if(code){
+    _defaultErrorHandlers[code] = h;
+  } else {
+    defaultErrorDispatcher = h;
   }
 };
 
