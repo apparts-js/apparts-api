@@ -4,4 +4,9 @@
 
 * Usage
 
-Requires the configuration =api= with the key =url=.
+Requires the configuration =api= with the key =urls {array}= and
+optionally the key =amountFirstURLsToShuffle {int}= that influences
+how many URLs will be shuffled from the =urls= array. Only the first n
+URLs will be shuffled so that the locally closest can be put in the
+list first and shuffled, but other backup URLs still be used further
+behind in the array.

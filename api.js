@@ -1,7 +1,11 @@
 import * as network from './network.js';
 
-let myStore;
+let myStore = { getState: () => { throw 'api.setStore not called';}};
 export const setStore = store => myStore = store;
+let onOffline = () => {throw 'api.onOffline not set';};
+export const setOnOffline  = h => onOffline = h;
+let onUnauthorized = () => {};
+export const setOnUnauthorized = h => onUnauthorized = h;
 
 const _myFetch = (url, method, body,
                   auth = myStore.getState().global.token) =>
@@ -16,12 +20,13 @@ const _myFetch = (url, method, body,
             .catch(x => {
               if(x.status > 200){
                 if(x.status === 401 && x._bodyText === "Unauthorized"){
+                  onUnauthorized();
                   return Promise.reject(401);
                 } else {
                   return Promise.reject(x);
                 }
               }
-              console.log(x);
+              onOffline();
               return Promise.reject(0);
             });
         };
