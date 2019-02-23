@@ -30,9 +30,7 @@ export const _myFetch = (url, auth, method, body, urlToTry=0) => {
     .catch(e => {
       console.log(e);
 
-      if((e.message === "Failed to fetch"
-          || e.message === "Network request failed")
-         && urlToTry < baseURLs.length - 1){
+      if( urlToTry < baseURLs.length - 1){
         return _myFetch(url, auth, method, body, urlToTry + 1);
       } else {
         return Promise.reject(e);
