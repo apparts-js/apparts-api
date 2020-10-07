@@ -2,11 +2,151 @@
 #+DATE: [2019-02-07 Thu]
 #+AUTHOR: Philipp Uhl
 
+* Setup
+
+To tell the =@apparts/api= package, how to work with your API, you
+have to overload the =Request= class. If you are using tokens for users
+to be authenticated (e.g. when using =@apparts/login-server=) you also
+need to overload the =Token= class and tell the =Request= class to use
+the =Token= class in a custom authentication method (compare
+=authUser= below).
+
+Finally, give your new =Request= class to =useApi= and export the
+functions that you recieve.
+
+#+BEGIN_SRC js
+  import {useApi, Token, Request} from "@apparts/api";
+
+  const APIVERSION = 1;
+  const URL = __DEV__ // eslint-disable-line no-undef
+        ? "https://devendpoint/v/"
+        : "https://prodendpoint/v/";
+
+  const logout = () => {
+    // Log out user on 401 HTTP-Error
+    window.location.href = "/login?force=true";
+  };
+
+  class MyToken extends Token {
+    constructor(user) {
+      super(user);
+
+      // Tell Token where to find the users api token, should you
+      // already have one
+      this._apiToken = user.apiToken;
+    }
+
+    async renewAPIToken(user) {
+      // Tell Token how to renew the API Token
+      const apiToken = await get("user/apiToken").authPW(
+        user.email,
+        user.loginToken
+      );
+      return apiToken;
+    }
+
+    static getUserKey(user) {
+      // Tell Token how to identify users
+      return user.email;
+    }
+  }
+
+  class MyRequest extends Request {
+    getURL(apiVersion) {
+      // Tell Request what the URL prefix is
+      return URL + apiVersion;
+    }
+    getAPIVersion() {
+      // Tell Request what the default APIVersion is
+      return APIVERSION;
+    }
+
+    authUser(user) {
+      // Define a method for authenticating with a user token.
+      // This will be called by you, when you want to authenticate with a user
+      this._auth = MyToken.getAPIToken(user);
+      return this;
+    }
+
+    async middleware() {
+      // Tell Request what to do on recieving not-yet caught errors, that should be
+      // handled globally.
+
+      this.on(410, () => alert("Your website is out of date, please reload it."));
+      this.on({ status: 401, error: "Token invalid" }, () => { throw "Invalid token"; });
+      this.on(401, logout);
+      this.on(0, () => alert("We could not reach the server. Are you online?"));
+    }
+  }
+
+  const { get, put, patch, post, del } = useApi(MyRequest);
+  export { get, put, patch, post, del };
+#+END_SRC
+
 * Usage
 
-Requires the configuration =api= with the key =urls {array}= and
-optionally the key =amountFirstURLsToShuffle {int}= that influences
-how many URLs will be shuffled from the =urls= array. Only the first n
-URLs will be shuffled so that the locally closest can be put in the
-list first and shuffled, but other backup URLs still be used further
-behind in the array.
+The functions =get=, =put=, =patch=, =post=, =del= have this
+signature (exemplary for =get=):
+
+- =get(url: <string>, urlParams: <+array>): Request= :: The url can be
+  parameterized with =$1=, =$2=, ... Each =$=-prefixed number will be
+  replaced with the corresponding element from the array: =$1= will be
+  replaced with =urlParams[0]=, =$2= with =urlParams[1]=, and so on. A
+  parameter can be used multiple times in the =url=-string. If not all
+  or too many parameters are used, an error will be thrown.
+
+The functions =get=, =put=, =patch=, =post=, =del= return a
+=Request=. Requests have the following methods:
+
+- =query(params: <object>): Request= :: Set query params as key value
+  pairs.
+  : r.query({ filter: "4", a: "b" }) // will be https://yourendpoint/path/to/endpoint?filter=4&a=b
+- =data(data: <object>): Request= :: Set the body data
+- =settings(settings: <object>): Request= :: Set =axios= settings
+- =v(v: int): Request= :: Overwrite APIVersion, used for this request
+- =auth(auth: <object>): Request= :: Set the =axios=-auth param
+- =authPW(username: <string>, password: <string>): Request= :: Use basic auth
+- =authAPIKey(token: <string>): Request= :: Use bearer auth
+- =on(status: <int | object>, next: <func>): Request= :: Attach an error handler:
+  - Status parameter:
+    - If used with =status= as an integer, matches all HTTP-Errors with
+      that status.
+    - If used with =status= as an object of the form ={ status: <int>,
+      error: <string> }=, matches all HTTP-Errors with that status and
+      an object with a matching error-key in the body.
+  - When such an error occurs, =next(errorJson, error)=
+    will be called with =errorJson= being the parsed error and =error=
+    the raw =axios= error.
+  - Multiple error catchers can be appended. The first one to match
+    (in order of attaching) will be executed.
+  - When error has been caught, =catch= will be called, but receives
+    =false= as an error.
+- =then(): Promise= :: Then
+- =catch(): Promise= :: Catch
+- =finally(): Promise= :: Finally
+
+Example:
+
+#+BEGIN_SRC js
+  try {
+    const resp = await put("users/$1/name")
+      .data({ name: "John" })
+      .userAuth(user)
+      .on({ status: 400, error: "Too short" }, () => {
+        alert("Please choose a longer username.");
+      })
+      .on({ status: 400, error: "Is taken" }, () => {
+        alert("This username is taken, already. Please choose a different username.");
+      });
+  } catch (e) {
+    // If e is not false, then, no error-catcher caught the error and
+    // you might want to take care of it
+    e && alert(e);
+
+    // Do, what you have to do on an error. Catch will be called, even
+    // when the error was caught by an error catcher. If you have some
+    // error-unspecific cleanup to do, this would be a good place:
+  
+    /* setLoading(false); */
+  }
+#+END_SRC

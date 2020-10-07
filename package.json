@@ -1,10 +1,11 @@
 {
-  "name": "apparts-frontend-api",
-  "version": "2.0.3",
-  "description": "Offers a unified set of api-stuff",
+  "name": "@apparts/api",
+  "version": "1.0.0",
+  "description": "A unified API package for @apparts",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --watch",
+    "testCoverage": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -19,9 +20,16 @@
   "author": "Philipp Uhl",
   "license": "UNLICENSED",
   "dependencies": {
-    "base-64": "^0.1.0"
+    "axios": "^0.20.0"
   },
-  "peerDependencies": {
-    "apparts-config": "git+ssh://git@ph-uhl.com:Apparts/apparts-config.git#semver:^1.0.3"
-  }
+  "devDependencies": {
+    "@apparts/config": "^1.0.5",
+    "@apparts/error": "^1.0.3",
+    "@apparts/types": "^4.0.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "jest": "^26.5.2",
+    "supertest": "^5.0.0"
+  },
+  "testEnvironment": "node"
 }

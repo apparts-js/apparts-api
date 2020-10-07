@@ -1,3 +1,5 @@
+const Request = require("./Request");
+const Token = require("./Token");
+const useApi = require("./api");
 
-
-export * from './api.js';
+module.exports = { Request, Token, useApi };
