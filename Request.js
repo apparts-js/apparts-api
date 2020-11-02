@@ -23,6 +23,8 @@ class Request extends Promise {
     );
   }
 
+  online() {}
+
   query(params) {
     if (typeof params !== "object") {
       throw new Error("Request.query: params must be an object");
@@ -112,6 +114,7 @@ class Request extends Promise {
   async _handleAPI(request, codeCatchers) {
     try {
       const { data } = await request();
+      this.online();
       return data;
     } catch (error) {
       const code = (error && error.response && error.response.status) || 0,
@@ -122,6 +125,10 @@ class Request extends Promise {
           ? status === code
           : status.status === code && status.error === (data || {}).error
       );
+
+      if (code !== 0) {
+        this.online();
+      }
 
       if (catcher) {
         catcher.next(error.response && error.response.data, error);

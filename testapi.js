@@ -48,6 +48,10 @@ class MyRequest extends Request {
     return APIVERSION;
   }
 
+  online() {
+    console.log("online");
+  }
+
   authUser(user) {
     // Define a method for authenticating with a user token.
     // This will be called by you, when you want to authenticate with a user

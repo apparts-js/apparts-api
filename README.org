@@ -61,6 +61,10 @@ functions that you recieve.
       return APIVERSION;
     }
 
+    online() {
+      // Will be called, when a network-call succeded
+    }
+
     authUser(user) {
       // Define a method for authenticating with a user token.
       // This will be called by you, when you want to authenticate with a user

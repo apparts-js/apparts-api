@@ -168,8 +168,9 @@ describe("Error catchers", () => {
     const consoleMock = jest.spyOn(console, "log");
     await expect(get("nope400").query({ status: 401 })).rejects.toBe(false);
 
-    expect(consoleMock.mock.calls.length).toBe(1);
-    expect(consoleMock.mock.calls[0][0]).toBe("logout");
+    expect(consoleMock.mock.calls.length).toBe(2);
+    expect(consoleMock.mock.calls[0][0]).toBe("online");
+    expect(consoleMock.mock.calls[1][0]).toBe("logout");
     consoleMock.mockRestore();
   });
   test("Middleware catcher should preserve order", async () => {
@@ -178,8 +179,9 @@ describe("Error catchers", () => {
       get("nope400").query({ status: 401, error: "Token invalid" })
     ).rejects.toBe(false);
 
-    expect(consoleMock.mock.calls.length).toBe(1);
-    expect(consoleMock.mock.calls[0][0]).toBe("tokenInv");
+    expect(consoleMock.mock.calls.length).toBe(2);
+    expect(consoleMock.mock.calls[0][0]).toBe("online");
+    expect(consoleMock.mock.calls[1][0]).toBe("tokenInv");
     consoleMock.mockRestore();
   });
   test("Middleware catcher should run after manual catchers", async () => {
@@ -189,7 +191,8 @@ describe("Error catchers", () => {
       get("nope400").query({ status: 401 }).on(401, mockOn)
     ).rejects.toBe(false);
 
-    expect(consoleMock.mock.calls.length).toBe(0);
+    expect(consoleMock.mock.calls.length).toBe(1);
+    expect(consoleMock.mock.calls[0][0]).toBe("online");
 
     expect(mockOn.mock.calls.length).toBe(1);
     expect(mockOn.mock.calls[0][0]).toMatchObject({
@@ -201,6 +204,16 @@ describe("Error catchers", () => {
 });
 
 describe("Test offline behavior", () => {
+  test("Online detected", async () => {
+    const consoleMock = jest.spyOn(console, "log");
+
+    await expect(await get("get")).toBe("ok get");
+
+    expect(consoleMock.mock.calls.length).toBe(1);
+    expect(consoleMock.mock.calls[0][0]).toBe("online");
+    consoleMock.mockRestore();
+  });
+
   test("Middleware catcher", async () => {
     server.close();
     server = null;
