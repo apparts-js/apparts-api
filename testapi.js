@@ -3,15 +3,15 @@ const { Token, Request, useApi } = require("./index");
 const APIVERSION = 1;
 const URL = "http://localhost:3000/v/";
 
-const logout = () => {
-  console.log("logout");
-};
-const onInvToken = () => {
-  console.log("tokenInv");
-};
+const logout = () => {};
+const onInvToken = () => {};
 const on410 = () => {};
-const onNotOnline = () => {
-  console.log("offline");
+const onNotOnline = () => {};
+const online = () => {};
+const renewed = () => {};
+
+const getToken = async () => {
+  return await get("apiToken");
 };
 
 class MyToken extends Token {
@@ -25,10 +25,8 @@ class MyToken extends Token {
 
   async renewAPIToken(user) {
     // Tell Token how to renew the API Token
-    const apiToken = await get("user/apiToken").authPW(
-      user.email,
-      user.loginToken
-    );
+    const apiToken = await module.exports.getToken();
+    module.exports.renewed();
     return apiToken;
   }
 
@@ -49,7 +47,7 @@ class MyRequest extends Request {
   }
 
   online() {
-    console.log("online");
+    module.exports.online();
   }
 
   authUser(user) {
@@ -63,12 +61,25 @@ class MyRequest extends Request {
     // Tell Request what to do on recieving not-yet caught errors, that should be
     // handled globally.
 
-    this.on(410, on410);
-    this.on({ status: 401, error: "Token invalid" }, onInvToken);
-    this.on(401, logout);
-    this.on(0, onNotOnline);
+    this.on(410, module.exports.on410);
+    this.on({ status: 401, error: "Token invalid" }, module.exports.onInvToken);
+    this.on(401, module.exports.logout);
+    this.on(0, module.exports.onNotOnline);
   }
 }
 
 const { get, put, patch, post, del } = useApi(MyRequest);
-module.exports = { get, put, patch, post, del };
+module.exports = {
+  get,
+  put,
+  patch,
+  post,
+  del,
+  getToken,
+  logout,
+  onInvToken,
+  on410,
+  onNotOnline,
+  online,
+  renewed,
+};

@@ -1,7 +1,7 @@
 const { HttpError } = require("@apparts/error");
 const express = require("express");
-const { preparator } = require("@apparts/types");
-
+const { preparator, prepauthTokenJWT } = require("@apparts/types");
+const JWT = require("jsonwebtoken");
 const app = express();
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
@@ -125,6 +125,27 @@ app.get(
     },
     async ({ params: { p1 } }) => {
       return { p1 };
+    }
+  )
+);
+
+app.get(
+  "/v/1/jwted",
+  prepauthTokenJWT("abc")({}, async () => {
+    return "ok";
+  })
+);
+
+app.get(
+  "/v/1/apiToken",
+  preparator(
+    {
+      query: {
+        expiresIn: { type: "string", default: "100000" },
+      },
+    },
+    async ({ query: { expiresIn } }) => {
+      return JWT.sign({ action: "login" }, "abc", { expiresIn });
     }
   )
 );

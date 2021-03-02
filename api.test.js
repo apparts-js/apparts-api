@@ -8,7 +8,8 @@ const axios = require("axios");
 const myEndpoint = require("./testserver");
 const app = myEndpoint.app;
 
-const { get, put, patch, post, del } = require("./testapi");
+const testapi = require("./testapi");
+const { get, put, patch, post, del } = testapi;
 
 let server;
 beforeEach(() => {
@@ -59,14 +60,30 @@ describe("Requests with params", () => {
     });
   });
   test("Too few parameters", async () => {
+    const consoleMock = jest.spyOn(console, "log");
     await expect(get("params/$1/$2/$3/a", [])).rejects.toBe(
       "Too few parameters for prepared statement"
     );
+    expect(consoleMock.mock.calls.length).toBe(1);
+    expect(consoleMock.mock.calls[0]).toEqual([
+      "Too few parameters for prepared statement",
+      "params/$1/$2/$3/a",
+      [],
+    ]);
+    consoleMock.mockRestore();
   });
   test("Too many parameters", async () => {
+    const consoleMock = jest.spyOn(console, "log");
     await expect(get("params/$1/$2/$3/a", [1, 2, 3, 4])).rejects.toBe(
       "Too many parameters for prepared statement"
     );
+    expect(consoleMock.mock.calls.length).toBe(1);
+    expect(consoleMock.mock.calls[0]).toEqual([
+      "Too many parameters for prepared statement",
+      "params/$1/$2/$3/a",
+      [1, 2, 3, 4],
+    ]);
+    consoleMock.mockRestore();
   });
   test("Check encoding", async () => {
     const res = await get("params/$1/$2/3/a", ["/=?&", 2]);
@@ -165,63 +182,140 @@ describe("Error catchers", () => {
   });
 
   test("Middleware catcher", async () => {
-    const consoleMock = jest.spyOn(console, "log");
+    const onlineMock = jest.spyOn(testapi, "online");
+    const logoutMock = jest.spyOn(testapi, "logout");
     await expect(get("nope400").query({ status: 401 })).rejects.toBe(false);
 
-    expect(consoleMock.mock.calls.length).toBe(2);
-    expect(consoleMock.mock.calls[0][0]).toBe("online");
-    expect(consoleMock.mock.calls[1][0]).toBe("logout");
-    consoleMock.mockRestore();
+    expect(onlineMock.mock.calls.length).toBe(1);
+    expect(logoutMock.mock.calls.length).toBe(1);
+    onlineMock.mockRestore();
+    logoutMock.mockRestore();
   });
   test("Middleware catcher should preserve order", async () => {
-    const consoleMock = jest.spyOn(console, "log");
+    const onlineMock = jest.spyOn(testapi, "online");
+    const tokenInvMock = jest.spyOn(testapi, "onInvToken");
+
     await expect(
       get("nope400").query({ status: 401, error: "Token invalid" })
     ).rejects.toBe(false);
 
-    expect(consoleMock.mock.calls.length).toBe(2);
-    expect(consoleMock.mock.calls[0][0]).toBe("online");
-    expect(consoleMock.mock.calls[1][0]).toBe("tokenInv");
-    consoleMock.mockRestore();
+    expect(onlineMock.mock.calls.length).toBe(1);
+    expect(tokenInvMock.mock.calls.length).toBe(1);
+    onlineMock.mockRestore();
+    tokenInvMock.mockRestore();
   });
   test("Middleware catcher should run after manual catchers", async () => {
-    const consoleMock = jest.spyOn(console, "log");
+    const onlineMock = jest.spyOn(testapi, "online");
     const mockOn = jest.fn((e) => {});
     await expect(
       get("nope400").query({ status: 401 }).on(401, mockOn)
     ).rejects.toBe(false);
 
-    expect(consoleMock.mock.calls.length).toBe(1);
-    expect(consoleMock.mock.calls[0][0]).toBe("online");
+    expect(onlineMock.mock.calls.length).toBe(1);
 
     expect(mockOn.mock.calls.length).toBe(1);
     expect(mockOn.mock.calls[0][0]).toMatchObject({
       error: "This is wrong, fool",
     });
 
-    consoleMock.mockRestore();
+    onlineMock.mockRestore();
   });
 });
 
 describe("Test offline behavior", () => {
   test("Online detected", async () => {
-    const consoleMock = jest.spyOn(console, "log");
+    const onlineMock = jest.spyOn(testapi, "online");
 
     await expect(await get("get")).toBe("ok get");
 
-    expect(consoleMock.mock.calls.length).toBe(1);
-    expect(consoleMock.mock.calls[0][0]).toBe("online");
-    consoleMock.mockRestore();
+    expect(onlineMock.mock.calls.length).toBe(1);
+    onlineMock.mockRestore();
   });
 
   test("Middleware catcher", async () => {
     server.close();
     server = null;
-    const consoleMock = jest.spyOn(console, "log");
+    const offlineMock = jest.spyOn(testapi, "onNotOnline");
+
     await expect(get("nope400").query({ status: 401 })).rejects.toBe(false);
 
-    expect(consoleMock.mock.calls.length).toBe(1);
-    expect(consoleMock.mock.calls[0][0]).toBe("offline");
-    consoleMock.mockRestore();
+    expect(offlineMock.mock.calls.length).toBe(1);
+    offlineMock.mockRestore();
+  });
+});
+
+describe("Test token invalid recover", () => {
+  test("Should recover from 401", async () => {
+    let timeMock = jest
+      .spyOn(Date, "now")
+      .mockImplementation(() => 1614689026333);
+
+    const onlineMock = jest.spyOn(testapi, "online");
+    const renewMock = jest.spyOn(testapi, "renewed");
+
+    const jwt = await get("apiToken").query({ expiresIn: "1000" });
+    timeMock.mockRestore();
+    timeMock = jest
+      .spyOn(Date, "now")
+      .mockImplementation(() => 1614689026333 + 1000 * 60 * 5);
+    await expect(
+      get("jwted").authUser({ email: "test", apiToken: jwt })
+    ).resolves.toBe("ok");
+
+    expect(onlineMock.mock.calls.length).toBe(3);
+    expect(renewMock.mock.calls.length).toBe(1);
+    onlineMock.mockRestore();
+    renewMock.mockRestore();
+    timeMock.mockRestore();
+  });
+  test("Should reuse token", async () => {
+    const onlineMock = jest.spyOn(testapi, "online");
+    const timeMock = jest
+      .spyOn(Date, "now")
+      .mockImplementation(() => 1614689026333 + 1000 * 60 * 6);
+
+    await expect(await get("jwted").authUser({ email: "test" })).toBe("ok");
+    expect(onlineMock.mock.calls.length).toBe(1);
+
+    onlineMock.mockRestore();
+    timeMock.mockRestore();
+  });
+
+  test("Should say token issue on token issue", async () => {
+    const tokenMock = jest
+      .spyOn(testapi, "getToken")
+      .mockImplementation(async () => {
+        return "nayayayay";
+      });
+
+    const onInvTokenMock = jest.spyOn(testapi, "onInvToken");
+    await expect(get("jwted").authUser({ email: "boon" })).rejects.toBe(false);
+
+    expect(onInvTokenMock.mock.calls.length).toBe(1);
+    onInvTokenMock.mockRestore();
+    tokenMock.mockRestore();
+  });
+  test("Should say offline on offline token recover", async () => {
+    const offlineMock = jest.spyOn(testapi, "onNotOnline");
+    const tokenMock = jest
+      .spyOn(testapi, "getToken")
+      .mockImplementation(async () => {
+        server.close();
+        server = null;
+        const token = await get("apiToken");
+        return token;
+      });
+    await expect(get("jwted").authUser({ email: "noob" })).rejects.toBe(false);
+    expect(offlineMock.mock.calls.length).toBe(1);
+    offlineMock.mockRestore();
+    tokenMock.mockRestore();
+  });
+  test("Should say offline on offline call with token", async () => {
+    server.close();
+    server = null;
+    const offlineMock = jest.spyOn(testapi, "onNotOnline");
+    await expect(get("jwted").authUser({ email: "noob" })).rejects.toBe(false);
+    expect(offlineMock.mock.calls.length).toBe(1);
+    offlineMock.mockRestore();
   });
 });

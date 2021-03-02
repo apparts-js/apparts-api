@@ -93,7 +93,11 @@ class Request extends Promise {
           ...this._settings,
         });
       try {
-        const res = await this._handleAPI(request, this._codeCatchers);
+        const res = await this._handleAPI(
+          request,
+          this._codeCatchers,
+          !this._secondTry && this._auth && this._auth.renew
+        );
         return res;
       } catch (e) {
         if (e === "Token invalid" && !this._secondTry) {
@@ -101,7 +105,6 @@ class Request extends Promise {
           await this._auth.renew();
           return await this.run();
         } else if (e === "Token invalid") {
-          alert("NOT AUTHENTICATED");
           this.notAuthenticated();
         }
         throw e;
@@ -111,7 +114,7 @@ class Request extends Promise {
     }
   }
 
-  async _handleAPI(request, codeCatchers) {
+  async _handleAPI(request, codeCatchers, canRecover401) {
     try {
       const { data } = await request();
       this.online();
@@ -119,6 +122,14 @@ class Request extends Promise {
     } catch (error) {
       const code = (error && error.response && error.response.status) || 0,
         data = error && error.response && error.response.data;
+
+      if (
+        code === 401 &&
+        (data || {}).error === "Token invalid" &&
+        canRecover401
+      ) {
+        return Promise.reject("Token invalid");
+      }
 
       const catcher = codeCatchers.find(({ status }) =>
         typeof status === "number"
@@ -176,9 +187,14 @@ class Request extends Promise {
           .join("&");
     }
 
+    const preTransformUri = uri;
     params.forEach((param, i) => {
       if (!uri.match(new RegExp("\\$" + (i + 1)))) {
-        console.log("Too many parameters for prepared statement", uri, params);
+        console.log(
+          "Too many parameters for prepared statement",
+          preTransformUri,
+          params
+        );
         throw "Too many parameters for prepared statement";
       }
       let val = param;
@@ -192,7 +208,11 @@ class Request extends Promise {
       );
     });
     if (uri.match(new RegExp("\\$"))) {
-      console.log("Too few parameters for prepared statement", uri, params);
+      console.log(
+        "Too few parameters for prepared statement",
+        preTransformUri,
+        params
+      );
       throw "Too few parameters for prepared statement";
     }
     return "/" + uri + queryparams;

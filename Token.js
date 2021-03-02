@@ -4,7 +4,7 @@ const tokens = {};
 class Token {
   constructor(user) {
     this._user = user;
-    this.renew();
+    this.renew().catch(() => {});
   }
 
   async getToken() {
@@ -34,14 +34,20 @@ class Token {
         // offline
         // TODO: something
       }, APITOKEN_THRESHOLD);
-      this.renewAPIToken(this._user).then((token) => {
-        clearTimeout(timeout);
-        this._apiToken = token;
-        this._renewing = null;
-        res(token);
-      });
+      this.renewAPIToken(this._user)
+        .then((token) => {
+          clearTimeout(timeout);
+          this._apiToken = token;
+          this._renewing = null;
+          res(token);
+        })
+        .catch((e) => {
+          clearTimeout(timeout);
+          this._renewing = null;
+          rej(e);
+        });
     });
-    return this._renewing;
+    return await this._renewing;
   }
 
   static getUserKey(user) {
