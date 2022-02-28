@@ -1,6 +1,6 @@
-const Token = require("./Token");
+import { Token } from "./Token";
 
-class Request extends Promise {
+export class Request extends Promise {
   constructor(uri, params, method) {
     super(() => {});
     this._codeCatchers = [];
@@ -227,5 +227,3 @@ class Request extends Promise {
     return this._getP().finally(...ps);
   }
 }
-
-module.exports = Request;

@@ -1,6 +1,6 @@
-const axios = require("axios");
+import axios from "axios";
 
-const useApi = (Request) => ({
+export const useApi = (Request) => ({
   get(uri, params) {
     const obj = new Request(uri, params, (a, b, c) => axios.get(a, c));
     obj.data = () => {
@@ -25,5 +25,3 @@ const useApi = (Request) => ({
     return new Request(uri, params, (a, b, c) => axios.delete(a, c));
   },
 });
-
-module.exports = useApi;

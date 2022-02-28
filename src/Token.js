@@ -1,7 +1,7 @@
 const APITOKEN_THRESHOLD = 1000 * 60;
 
 const tokens = {};
-class Token {
+export class Token {
   constructor(user) {
     this._user = user;
     this.renew().catch(() => {});
@@ -61,5 +61,3 @@ class Token {
     return tokens[this.getUserKey(user)];
   }
 }
-
-module.exports = Token;
