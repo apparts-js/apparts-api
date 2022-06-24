@@ -8,7 +8,7 @@ const axios = require("axios");
 const myEndpoint = require("./testserver");
 const app = myEndpoint.app;
 
-const testapi = require("./testapi");
+const testapi = require("./testApi");
 const { get, put, patch, post, del } = testapi;
 
 let server;
