@@ -1,0 +1,34 @@
+import axios from "axios";
+import { Request } from "./Request";
+
+export const useApi = <R extends Request<any>>(
+  Request: new <T>(
+    uri: string,
+    params: unknown[],
+    method: (a, b, c) => Promise<T>
+  ) => R
+) => ({
+  get<T>(uri: string, params?: unknown[]): Request<T> {
+    const obj = new Request<T>(uri, params, (a, b, c) => axios.get(a, c));
+    obj.data = () => {
+      throw "GET Request cannot take data";
+    };
+    return obj;
+  },
+
+  post<T>(uri: string, params?: unknown[]) {
+    return new Request<T>(uri, params, axios.post);
+  },
+
+  put<T>(uri: string, params?: unknown[]) {
+    return new Request<T>(uri, params, axios.put);
+  },
+
+  patch<T>(uri: string, params?: unknown[]) {
+    return new Request<T>(uri, params, axios.patch);
+  },
+
+  del<T>(uri: string, params?: unknown[]) {
+    return new Request<T>(uri, params, (a, b, c) => axios.delete(a, c));
+  },
+});
