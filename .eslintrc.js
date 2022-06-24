@@ -31,6 +31,9 @@ module.exports = {
         project: "tsconfig.json",
         sourceType: "module",
       },
+      rules: {
+        "@typescript-eslint/ban-ts-comment": "off",
+      },
     },
   ],
 };
