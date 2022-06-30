@@ -1,6 +1,11 @@
-import { genErrorReturnTypes, prepareErrors } from "./genErrorReturnTypes";
+import {
+  genErrorReturnTypes,
+  getErrorReturns,
+  getSuccessReturns,
+  prepareErrors,
+} from "./genErrorReturnTypes";
 import { genType } from "./genTypes";
-import { Return, ReturnError, ReturnSuccess, Type } from "./types";
+import { Return, PreparedReturnError, Type } from "./types";
 import {
   capitalize,
   createPath,
@@ -12,7 +17,7 @@ import {
 export const genErrorCatchers = (
   method: string,
   name: string,
-  codes: Record<number, ReturnError[]>
+  codes: Record<number, PreparedReturnError[]>
 ) => {
   const capMethod = capitalize(method);
   const typeCodes: string[] = [];
@@ -79,14 +84,10 @@ export const genEndpoint = ({
   const funcParamTypes: string[] = [];
   const funcCalls: string[] = [];
 
-  const errorReturnTypes = prepareErrors(
-    returns.filter((ret): ret is ReturnError => "error" in ret)
-  );
+  const errorReturnTypes = prepareErrors(getErrorReturns(returns));
   const endpointTypes = [
     genType(`${method}${name}Returns`, {
-      alternatives: returns.filter(
-        (ret): ret is ReturnSuccess => !("error" in ret)
-      ),
+      alternatives: getSuccessReturns(returns),
       type: "oneOf",
     }),
     ...genErrorReturnTypes(method, name, errorReturnTypes),

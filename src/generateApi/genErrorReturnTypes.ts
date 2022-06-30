@@ -1,16 +1,41 @@
-import { ReturnError } from "./types";
+import { Return, PreparedReturnError, ReturnSuccess } from "./types";
 import { genType } from "./genTypes";
 import { nameFromString } from "./utils";
 
-export const prepareErrors = (returns: ReturnError[]) => {
-  const codes: Record<number, ReturnError[]> = {};
+export const getErrorReturns = (returns: Return[]) => {
+  return returns
+    .map((ret) => {
+      if ("keys" in ret && "error" in ret.keys && "value" in ret.keys.error) {
+        const { error, ...restType } = ret.keys;
+        return {
+          status: ret.status,
+          error: error.value,
+          restType: restType,
+        };
+      } else {
+        return ret;
+      }
+    })
+    .filter((ret): ret is PreparedReturnError => "error" in ret);
+};
+
+export const getSuccessReturns = (returns: Return[]) => {
+  return returns.filter(
+    (ret): ret is ReturnSuccess =>
+      !("error" in ret) &&
+      !("keys" in ret && "error" in ret.keys && "value" in ret.keys.error)
+  );
+};
+
+export const prepareErrors = (returns: PreparedReturnError[]) => {
+  const codes: Record<number, PreparedReturnError[]> = {};
   for (const r of returns) {
     codes[r.status] = codes[r.status] || [];
     codes[r.status].push(r);
   }
   for (const code in codes) {
     // filter out duplicate results
-    const uniqueCodes: ReturnError[] = [];
+    const uniqueCodes: PreparedReturnError[] = [];
 
     for (const error of codes[code]) {
       if (
@@ -29,7 +54,7 @@ export const prepareErrors = (returns: ReturnError[]) => {
 export const genErrorReturnTypes = (
   method: string,
   name: string,
-  codes: Record<number, ReturnError[]>
+  codes: Record<number, PreparedReturnError[]>
 ) => {
   const typeCodes: string[] = [];
   for (const code in codes) {
@@ -51,7 +76,7 @@ export const genErrorReturnTypes = (
       typeCodes.push(
         genType(`${method}${name}${code}${errorName}Response`, {
           type: "object",
-          keys: { error: { value: r.error } },
+          keys: { error: { value: r.error }, ...r.restType },
         })
       );
     }
