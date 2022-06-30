@@ -83,7 +83,7 @@ functions that you recieve.
     }
   }
 
-  const { get, put, patch, post, del, /*api*/ } = useApi(MyRequest);
+  const { get, put, patch, post, del } = useApi(MyRequest);
   export { get, put, patch, post, del };
 #+END_SRC
 
@@ -189,7 +189,7 @@ In your application:
 import { createApi } from "./<path to the generated file>"
 
 // setup MyRequest, etc.
-const { api: apiRaw } = useApi(MyRequest);
+const apiRaw = useApi(MyRequest);
 export const api = createApi(apiRaw);
 #+END_SRC
 
@@ -205,7 +205,7 @@ Can be accessed like this:
 
 #+BEGIN_SRC js
   try {
-    const res = await api.user.userId.info.get({ params: { userId }, /* data, query */})
+    const res = await api.user.info.get({ params: { userId }, /* data, query */})
     // Optional error catchers. Matching checked in order of function
     // usage. So in this example, first the catcher for { status: 404,
     // error: "user not found" } is checked, then { status: 404, error:
