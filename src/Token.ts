@@ -3,8 +3,8 @@ const APITOKEN_THRESHOLD = 1000 * 60;
 const tokens: { [k: string]: Token<unknown> } = {};
 export abstract class Token<User> {
   protected _user: User;
-  private _renewing: Promise<string> | null;
-  protected _apiToken: string;
+  private _renewing?: Promise<string>;
+  protected _apiToken?: string;
 
   constructor(user: User) {
     this._user = user;
@@ -30,10 +30,10 @@ export abstract class Token<User> {
     if (this._renewing) {
       return await this._renewing.finally();
     }
-    this._apiToken = null;
+    this._apiToken = undefined;
     this._renewing = new Promise((res, rej) => {
       const timeout = setTimeout(() => {
-        this._renewing = null;
+        this._renewing = undefined;
         rej();
         // offline
         // TODO: something
@@ -42,12 +42,12 @@ export abstract class Token<User> {
         .then((token) => {
           clearTimeout(timeout);
           this._apiToken = token;
-          this._renewing = null;
+          this._renewing = undefined;
           res(token);
         })
         .catch((e) => {
           clearTimeout(timeout);
-          this._renewing = null;
+          this._renewing = undefined;
           rej(e);
         });
     });

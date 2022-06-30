@@ -14,11 +14,15 @@ export abstract class Request<R> {
   private _secondTry;
   private _p;
 
-  constructor(uri: string, params: unknown[], method: (a, b, c) => Promise<R>) {
+  constructor(
+    uri: string,
+    params: unknown[] = [],
+    method: (a, b, c) => Promise<R>
+  ) {
     this._codeCatchers = [];
     this._apiVersion = this.getAPIVersion();
     this._uri = uri;
-    this._params = params || [];
+    this._params = params;
     if (!Array.isArray(this._params)) {
       this._params = [this._params];
     }
@@ -43,9 +47,9 @@ export abstract class Request<R> {
     this._query = params;
     return this;
   }
-  on(
+  on<T>(
     status: number | { error: string; status: number },
-    next: (data: unknown, error: unknown) => unknown
+    next: (data: T, error: unknown) => void
   ) {
     if (typeof status !== "number") {
       if (typeof status !== "object") {
@@ -185,7 +189,7 @@ export abstract class Request<R> {
     }
     return this._p;
   }
-  private _prepareStatement(uri, params = [], query = {}) {
+  private _prepareStatement(uri, params: unknown[] = [], query = {}) {
     let queryparams = "";
     if (query) {
       queryparams =
@@ -218,7 +222,7 @@ export abstract class Request<R> {
 
       uri = uri.replace(
         new RegExp("\\$" + (i + 1), "g"),
-        encodeURIComponent(val)
+        encodeURIComponent(String(val))
       );
     });
     if (uri.match(new RegExp("\\$"))) {

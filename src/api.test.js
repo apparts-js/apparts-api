@@ -9,7 +9,8 @@ const myEndpoint = require("./testserver");
 const app = myEndpoint.app;
 
 const testapi = require("./testApi");
-const { get, put, patch, post, del } = testapi;
+const { getApi } = require("./testApi");
+const { get, put, patch, post, del } = getApi(3000);
 
 let server;
 beforeEach(() => {
