@@ -32,9 +32,6 @@ jobs:
         run: |
           echo Local version ${{steps.get-local-version.outputs.packageVersion}}
           echo Remote version ${{steps.get-npm-published-version.outputs.npmVersion}}
-      - run: npm install
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
       - run: npm publish
         if: ${{ steps.get-local-version.outputs.packageVersion != steps.get-npm-published-version.outputs.npmVersion  }}
         name: Publish to npm
