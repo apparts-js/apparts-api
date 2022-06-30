@@ -9,6 +9,7 @@ export type ApiType = {
   del<T>(uri: string, params?: unknown[] | undefined): Request<T>;
 };
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const useApi = <R extends Request<any>>(
   Request: new <T>(
     uri: string,

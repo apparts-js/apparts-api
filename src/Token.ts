@@ -54,6 +54,7 @@ export abstract class Token<User> {
     return await this._renewing;
   }
 
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   static getUserKey(user: unknown): string {
     throw "Token not overloaded correctly: getUserKey missing";
   }

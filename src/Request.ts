@@ -237,7 +237,7 @@ export abstract class Request<R> {
   }
   then(
     onfulfilled?: (value: R) => R | PromiseLike<R>,
-    onrejected?: (reason: any) => PromiseLike<never>
+    onrejected?: (reason: unknown) => PromiseLike<never>
   ): Promise<R> {
     return this._getP().then(onfulfilled, onrejected);
   }

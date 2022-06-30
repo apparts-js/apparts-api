@@ -47,10 +47,10 @@ export const genEndpoint = ({
   path,
   assertions,
   returns,
-  title,
+}: /*  title,
   description,
-  options,
-}: {
+  options,*/
+{
   method: string;
   path: string;
   assertions: {

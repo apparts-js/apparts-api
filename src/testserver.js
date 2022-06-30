@@ -1,3 +1,5 @@
+/* eslint-env node */
+
 const { HttpError } = require("@apparts/error");
 const express = require("express");
 const { preparator, prepauthTokenJWT } = require("@apparts/types");

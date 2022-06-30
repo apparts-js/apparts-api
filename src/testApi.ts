@@ -40,7 +40,7 @@ export const getApi = (port: number) => {
       this._apiToken = user.apiToken;
     }
 
-    async renewAPIToken(user: User) {
+    async renewAPIToken() {
       // Tell Token how to renew the API Token
       const apiToken = await getToken();
       renewed();
