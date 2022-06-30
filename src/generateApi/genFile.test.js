@@ -23,7 +23,7 @@ describe("genFile", () => {
     ]);
     expect(prettify(file)).toBe(
       prettify(`
-import { schema } from "@apparts/types";
+import * as schema from "@apparts/types";
 import { ApiType } from "@apparts/api";
 
 export const postV1UserReturnsSchema = schema.oneOf([schema.value("ok")]);
@@ -45,7 +45,7 @@ export const createApi = (api: ApiType) => {
     },
   };
 };
-    `)
+      `)
     );
   });
 });

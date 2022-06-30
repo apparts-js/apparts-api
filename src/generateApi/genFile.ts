@@ -26,7 +26,7 @@ export const genFile = (api: EndpointDefinition[]) => {
   }
 
   return `
-import { schema } from "@apparts/types";
+import * as schema from "@apparts/types";
 import { ApiType } from "@apparts/api";
 
 ${types}
