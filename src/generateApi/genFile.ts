@@ -2,16 +2,47 @@ import { genEndpoint } from "./genEndpoint";
 import { EndpointDefinition } from "./types";
 import { assocPath } from "ramda";
 
-export const genFile = (api: EndpointDefinition[]) => {
-  const endpoints = api
-    .filter(({ method }) => method !== "options")
-    .map((endpoint) =>
-      genEndpoint({
-        ...endpoint,
-        assertions: endpoint.assertions || {},
-        returns: endpoint.returns || [],
-      })
-    );
+type Options = {
+  includePaths?: string[][];
+  excludePaths?: string[][];
+};
+
+export const pathMatches = (paths: string[][], path: string[]) => {
+  for (const p of paths) {
+    if (p.reduce((a, b, i) => a && b === path[i], true)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+export const excludeEndpoints = <T extends { path: string[] }>(
+  endpoints: T[],
+  options?: Options
+) =>
+  endpoints.filter(
+    ({ path }) =>
+      !options ||
+      (options.includePaths
+        ? pathMatches(options.includePaths, path)
+        : options?.excludePaths
+        ? !pathMatches(options.excludePaths, path)
+        : true)
+  );
+
+export const genFile = (api: EndpointDefinition[], options?: Options) => {
+  const endpoints = excludeEndpoints(
+    api
+      .filter(({ method }) => method !== "options")
+      .map((endpoint) =>
+        genEndpoint({
+          ...endpoint,
+          assertions: endpoint.assertions || {},
+          returns: endpoint.returns || [],
+        })
+      ),
+    options
+  );
 
   const types = endpoints.map(({ typeCode }) => typeCode).join("\n");
   let fnHirarchy = {};

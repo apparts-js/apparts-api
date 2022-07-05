@@ -1,5 +1,65 @@
-import { genFile } from "./genFile";
+import { genFile, pathMatches, excludeEndpoints } from "./genFile";
 import { prettify } from "./prettify";
+
+describe("pathMatches", () => {
+  it("should match paths", async () => {
+    expect(pathMatches([["venue"]], ["venue", "dashboard"])).toBe(true);
+    expect(pathMatches([["venue", "dashboard"]], ["venue", "dashboard"])).toBe(
+      true
+    );
+    expect(
+      pathMatches([["venue"], ["user", "login"]], ["venue", "dashboard"])
+    ).toBe(true);
+  });
+
+  it("should not match paths", async () => {
+    expect(pathMatches([["user"]], ["venue", "dashboard"])).toBe(false);
+    expect(pathMatches([["venue", "user"]], ["venue", "dashboard"])).toBe(
+      false
+    );
+    expect(
+      pathMatches([["dashboard"], ["user", "login"]], ["venue", "dashboard"])
+    ).toBe(false);
+  });
+});
+
+describe("excludeEndpoints", () => {
+  const endpoints = () => [
+    { path: ["venue", "payments", "receipt"] },
+    { path: ["venue", "order", "payments"] },
+    { path: ["venue", "order", "customers"] },
+    { path: ["user", "login"] },
+    { path: ["user", "logout"] },
+    { path: ["logs", "live"] },
+  ];
+  it("should keep all endpoints", async () => {
+    expect(excludeEndpoints(endpoints())).toStrictEqual(endpoints());
+    expect(excludeEndpoints(endpoints(), {})).toStrictEqual(endpoints());
+  });
+  it("should exclude some endpoints", async () => {
+    expect(
+      excludeEndpoints(endpoints(), {
+        excludePaths: [["user"], ["venue", "payments"]],
+      })
+    ).toStrictEqual([
+      { path: ["venue", "order", "payments"] },
+      { path: ["venue", "order", "customers"] },
+      { path: ["logs", "live"] },
+    ]);
+  });
+  it("should include some endpoints", async () => {
+    expect(
+      excludeEndpoints(endpoints(), {
+        includePaths: [["user"], ["venue", "payments"], ["logs", "live"]],
+      })
+    ).toStrictEqual([
+      { path: ["venue", "payments", "receipt"] },
+      { path: ["user", "login"] },
+      { path: ["user", "logout"] },
+      { path: ["logs", "live"] },
+    ]);
+  });
+});
 
 describe("genFile", () => {
   it("should generate file", async () => {
