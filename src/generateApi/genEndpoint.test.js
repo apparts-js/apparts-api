@@ -13,19 +13,22 @@ describe("genErrorCatchers", () => {
       prettify(`
 const a = {
     on400: (fn: (p: PostV1User400Response) => void) => {
-      return request.on<PostV1User400Response>(400, (p) => { fn(p); });
+      request.on<PostV1User400Response>(400, (p) => { fn(p); });
+      return enrichedRequest;
     },
     on400Error: (fn: (p: PostV1User400ErrorResponse) => void) => {
-      return request.on<PostV1User400ErrorResponse>(
+      request.on<PostV1User400ErrorResponse>(
         { status: 400, error: "error" },
         (p) => { fn(p); }
       );
+      return enrichedRequest;
     },
     on400OtherError: (fn: (p: PostV1User400OtherErrorResponse) => void) => {
-      return request.on<PostV1User400OtherErrorResponse>(
+      request.on<PostV1User400OtherErrorResponse>(
         { status: 400, error: "other error" },
         (p) => { fn(p); }
       );
+      return enrichedRequest;
     }
 }
       `)
@@ -63,7 +66,8 @@ describe("genEndpoint", () => {
         "user/venue/$1/payment/$2/receipt",
         [params.venueId, params.paymentId])
         .data(data).query(query);
-  return Object.assign(request, {});
+  const enrichedRequest = Object.assign(request, {});
+  return enrichedRequest;
   }`)
     );
     expect(path).toStrictEqual(["user", "venue", "payment", "receipt", "post"]);
@@ -98,7 +102,8 @@ describe("genEndpoint", () => {
      .post<PostV1UserReturns>(
         "user",
         []);
-  return Object.assign(request, {});
+  const enrichedRequest = Object.assign(request, {});
+  return enrichedRequest;
   }`)
     );
     expect(path).toStrictEqual(["user", "post"]);
@@ -128,23 +133,27 @@ describe("genEndpoint", () => {
       prettify(`
 () => {
   const request = api.post<PostV1UserReturns>("user", []);
-  return Object.assign(request, {
+  const enrichedRequest = Object.assign(request, {
     on400: (fn: (p: PostV1User400Response) => void) => {
-      return request.on<PostV1User400Response>(400, (p) => { fn(p); });
+      request.on<PostV1User400Response>(400, (p) => { fn(p); });
+      return enrichedRequest;
     },
     on400Error: (fn: (p: PostV1User400ErrorResponse) => void) => {
-      return request.on<PostV1User400ErrorResponse>(
+      request.on<PostV1User400ErrorResponse>(
         { status: 400, error: "error" },
         (p) => { fn(p); }
       );
+      return enrichedRequest;
     },
     on400OtherError: (fn: (p: PostV1User400OtherErrorResponse) => void) => {
-      return request.on<PostV1User400OtherErrorResponse>(
+      request.on<PostV1User400OtherErrorResponse>(
         { status: 400, error: "other error" },
         (p) => { fn(p); }
       );
+      return enrichedRequest;
     },
   });
+  return enrichedRequest;
 };`)
     );
     expect(path).toStrictEqual(["user", "post"]);

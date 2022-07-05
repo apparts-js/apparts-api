@@ -36,11 +36,13 @@ export const createApi = (api: ApiType) => {
     user: {
       post: () => {
         const request = api.post<PostV1UserReturns>("user", []);
-        return Object.assign(request, {});
+        const enrichedRequest = Object.assign(request, {});
+        return enrichedRequest;
       },
       get: () => {
         const request = api.get<GetV1UserReturns>("user", []);
-        return Object.assign(request, {});
+        const enrichedRequest = Object.assign(request, {});
+        return enrichedRequest;
       },
     },
   };

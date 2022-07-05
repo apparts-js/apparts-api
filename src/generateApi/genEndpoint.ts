@@ -28,7 +28,8 @@ export const genErrorCatchers = (
     const catchAllTypeName = `${capMethod}${name}${code}Response`;
     typeCodes.push(`
 on${code}: (fn: (p: ${catchAllTypeName}) => void) => {
-  return request.on<${catchAllTypeName}>(${code}, (p) => { fn(p); });
+  request.on<${catchAllTypeName}>(${code}, (p) => { fn(p); });
+  return enrichedRequest;
 },`);
 
     for (const r of codeReturns) {
@@ -38,9 +39,10 @@ on${code}: (fn: (p: ${catchAllTypeName}) => void) => {
       const catchErrorTypeName = `${capMethod}${name}${code}${errorName}Response`;
       typeCodes.push(`
 on${code}${errorName}: (fn: (p: ${catchErrorTypeName}) => void) => {
-return request.on<${catchErrorTypeName}>(
+  request.on<${catchErrorTypeName}>(
 { status: ${code}, error: ${JSON.stringify(r.error)} },
  (p) => { fn(p); });
+  return enrichedRequest;
 },`);
     }
   }
@@ -147,9 +149,10 @@ export const genEndpoint = ({
 , [${params.map((p) => "params." + p).join(",")}])
   ${funcCalls.join("\n")};
 
-  return Object.assign(request, {
-${errorCatchers}
+  const enrichedRequest = Object.assign(request, {
+    ${errorCatchers}
   });
+  return enrichedRequest;
 }`;
   return {
     funcCode: endpointFunc,
