@@ -1,30 +1,48 @@
-import { Return, PreparedReturnError, ReturnSuccess } from "./types";
+import {
+  Return,
+  PreparedReturnError,
+  ReturnError,
+  ReturnSuccess,
+} from "./types";
 import { genType } from "./genTypes";
 import { nameFromString } from "./utils";
 
 export const getErrorReturns = (returns: Return[]) => {
   return returns
+    .filter((ret): ret is ReturnError => ret.status >= 400)
     .map((ret) => {
       if ("keys" in ret && "error" in ret.keys && "value" in ret.keys.error) {
-        const { error, ...restType } = ret.keys;
+        const { error } = ret.keys;
         return {
           status: ret.status,
           error: error.value,
-          restType: restType,
-        };
+          returnType: { type: "object", keys: ret.keys },
+        } as PreparedReturnError;
+      } else if ("error" in ret) {
+        const { status, error, ...rest } = ret;
+        return {
+          status: status,
+          error,
+          returnType: {
+            type: "object",
+            keys: {
+              error: { value: error },
+              ...rest,
+            },
+          },
+        } as PreparedReturnError;
       } else {
-        return ret;
+        const { status, ...rest } = ret;
+        return {
+          status: status,
+          returnType: rest,
+        } as PreparedReturnError;
       }
-    })
-    .filter((ret): ret is PreparedReturnError => "error" in ret);
+    });
 };
 
 export const getSuccessReturns = (returns: Return[]) => {
-  return returns.filter(
-    (ret): ret is ReturnSuccess =>
-      !("error" in ret) &&
-      !("keys" in ret && "error" in ret.keys && "value" in ret.keys.error)
-  );
+  return returns.filter((ret): ret is ReturnSuccess => ret.status < 400);
 };
 
 export const prepareErrors = (returns: PreparedReturnError[]) => {
@@ -62,22 +80,20 @@ export const genErrorReturnTypes = (
     // add catch all for code
     typeCodes.push(
       genType(`${method}${name}${code}Response`, {
-        alternatives: codeReturns.map(({ error }) => ({
-          type: "object",
-          keys: { error: { value: error } },
-        })),
+        alternatives: codeReturns.map(({ returnType }) => returnType),
         type: "oneOf",
       })
     );
 
     for (const r of codeReturns) {
+      if (!r.error) {
+        continue;
+      }
+
       // add specific returns
       const errorName = nameFromString(r.error);
       typeCodes.push(
-        genType(`${method}${name}${code}${errorName}Response`, {
-          type: "object",
-          keys: { error: { value: r.error }, ...r.restType },
-        })
+        genType(`${method}${name}${code}${errorName}Response`, r.returnType)
       );
     }
   }

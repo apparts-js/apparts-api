@@ -5,9 +5,28 @@ describe("genErrorCatchers", () => {
   it("should generate error catchers", async () => {
     const errorCatchers = genErrorCatchers("post", "V1User", {
       400: [
-        { status: 400, error: "error" },
-        { status: 400, error: "other error" },
+        {
+          status: 400,
+          error: "error",
+          returnType: {
+            type: "object",
+            keys: {
+              error: {
+                value: "error",
+              },
+            },
+          },
+        },
+        {
+          status: 400,
+          error: "other error",
+          returnType: {
+            type: "object",
+            keys: { error: { value: "other error" } },
+          },
+        },
       ],
+      401: [{ status: 401, returnType: { type: "string" } }],
     });
     expect(prettify("const a = {" + errorCatchers.join("\n") + "}")).toBe(
       prettify(`
@@ -28,6 +47,10 @@ const a = {
         { status: 400, error: "other error" },
         (p) => { fn(p); }
       );
+      return enrichedRequest;
+    },
+    on401: (fn: (p: PostV1User401Response) => void) => {
+      request.on<PostV1User401Response>(401, (p) => { fn(p); });
       return enrichedRequest;
     }
 }

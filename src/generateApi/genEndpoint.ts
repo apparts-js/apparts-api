@@ -33,6 +33,9 @@ on${code}: (fn: (p: ${catchAllTypeName}) => void) => {
 },`);
 
     for (const r of codeReturns) {
+      if (!r.error) {
+        continue;
+      }
       const errorName = nameFromString(r.error);
 
       // add specific returns
