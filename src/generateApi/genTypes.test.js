@@ -29,6 +29,7 @@ describe("createTypeFsFromType", () => {
                 UstId: { type: "int" },
                 entityName: { type: "bool" },
               },
+              default: () => ({ UstId: 1, entityName: true }),
             },
             defaultLanguage: {
               type: "oneOf",
@@ -76,7 +77,7 @@ schema.obj({
   legalInfo: schema.obj({
     UstId: schema.int(),
     entityName: schema.boolean(),
-  }),
+  }).optional(),
   defaultLanguage: schema.oneOf([schema.value("de"), schema.value("en")]).derived(undefined),
   "allowed.OrderStates": schema.objValues(
     schema.obj({
