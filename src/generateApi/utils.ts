@@ -25,12 +25,18 @@ export const createPath = (path: string, paramsType: { [k: string]: Type }) => {
   let pathWOVersion = path.split("/").slice(3).join("/");
   const version = path.split("/")[2];
   const parts = pathWOVersion.replace(/\/:[^/]+/g, "").split("/");
+  const partsWithParams = pathWOVersion.split("/").filter((p) => p !== "");
 
   const params: string[] = [];
   let counter = 1;
   for (const param in paramsType) {
     pathWOVersion = pathWOVersion.replace(":" + param, "$" + counter++);
     params.push(param);
+  }
+
+  const lastPart = partsWithParams[partsWithParams.length - 1];
+  if (lastPart.charAt(0) === ":") {
+    parts.push("by" + capitalize(lastPart.slice(1)));
   }
 
   return {

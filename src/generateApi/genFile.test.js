@@ -80,6 +80,14 @@ describe("genFile", () => {
         title: "Get user",
         options: {},
       },
+      {
+        method: "get",
+        path: "/v/1/user/:userId",
+        assertions: { params: { userId: { type: "id" } } },
+        returns: [{ status: 200, value: "ok" }],
+        title: "Get user by id",
+        options: {},
+      },
     ]);
     expect(prettify(file)).toBe(
       prettify(`
@@ -90,7 +98,10 @@ export const postV1UserReturnsSchema = schema.oneOf([schema.value("ok")]);
 export type PostV1UserReturns = schema.InferType<typeof postV1UserReturnsSchema>;
 export const getV1UserReturnsSchema = schema.oneOf([schema.value("ok")]);
 export type GetV1UserReturns = schema.InferType<typeof getV1UserReturnsSchema>;
-
+export const getV1UserUserIdReturnsSchema = schema.oneOf([schema.value("ok")]);
+export type GetV1UserUserIdReturns = schema.InferType<typeof getV1UserUserIdReturnsSchema>;
+export const getV1UserUserIdParamsSchema = schema.obj({ userId: schema.int().semantic("id") });
+export type GetV1UserUserIdParams = schema.InferType<typeof getV1UserUserIdParamsSchema>;
 export const createApi = (api: ApiType) => {
   return {
     user: {
@@ -104,6 +115,13 @@ export const createApi = (api: ApiType) => {
         const enrichedRequest = Object.assign(request, {});
         return enrichedRequest;
       },
+      byUserId: {
+        get: ({params}: {params: GetV1UserUserIdParams}) => {
+          const request = api.get<GetV1UserUserIdReturns>("user/$1", [params.userId]);
+          const enrichedRequest = Object.assign(request, {});
+          return enrichedRequest;
+        },
+      }
     },
   };
 };

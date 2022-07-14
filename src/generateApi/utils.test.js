@@ -29,6 +29,19 @@ describe("nameFromString", () => {
 describe("createPath", () => {
   it("should create path", async () => {
     expect(
+      createPath("/v/1/user/venue/:venueId/order/:orderId/payment", {
+        venueId: { type: "id" },
+        orderId: { type: "id" },
+      })
+    ).toStrictEqual({
+      version: "1",
+      path: "user/venue/$1/order/$2/payment",
+      params: ["venueId", "orderId"],
+      parts: ["user", "venue", "order", "payment"],
+    });
+  });
+  it("should create path with trailing parameter", async () => {
+    expect(
       createPath("/v/1/user/venue/:venueId/order/:orderId/payment/:paymentId", {
         venueId: { type: "id" },
         orderId: { type: "id" },
@@ -38,7 +51,7 @@ describe("createPath", () => {
       version: "1",
       path: "user/venue/$1/order/$2/payment/$3",
       params: ["venueId", "orderId", "paymentId"],
-      parts: ["user", "venue", "order", "payment"],
+      parts: ["user", "venue", "order", "payment", "byPaymentId"],
     });
   });
 });
