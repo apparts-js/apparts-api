@@ -6,10 +6,10 @@ export const createTypeFsOpts = (type: Type) => {
   if (type.optional) {
     code += ".optional()";
   }
-  if (type.description) {
+  if ("description" in type) {
     code += `.description(${JSON.stringify(type.description)})`;
   }
-  if (type.default) {
+  if ("default" in type) {
     code += `.optional()`;
   }
   /*  if (type.title) {

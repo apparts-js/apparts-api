@@ -23,6 +23,10 @@ describe("createTypeFsFromType", () => {
               optional: true,
               mapped: "abc",
             },
+            number: {
+              type: "int",
+              default: 0,
+            },
             legalInfo: {
               type: "object",
               keys: {
@@ -74,6 +78,7 @@ schema.obj({
               .key()
               .readOnly(),
   name: schema.string().optional().description("test desc").mapped("abc"),
+  number: schema.int().optional(),
   legalInfo: schema.obj({
     UstId: schema.int(),
     entityName: schema.boolean(),
