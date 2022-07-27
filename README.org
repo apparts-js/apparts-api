@@ -1,4 +1,4 @@
-#+TITLE: Frontend-API
+#+TITLE: @apparts/api
 #+DATE: [2019-02-07 Thu]
 #+AUTHOR: Philipp Uhl
 
