@@ -104,24 +104,26 @@ export const getV1UserUserIdParamsSchema = schema.obj({ userId: schema.int().sem
 export type GetV1UserUserIdParams = schema.InferType<typeof getV1UserUserIdParamsSchema>;
 export const createApi = (api: ApiType) => {
   return {
-    user: {
-      post: () => {
-        const request = api.post<PostV1UserReturns>("user", []);
-        const enrichedRequest = Object.assign(request, {});
-        return enrichedRequest;
-      },
-      get: () => {
-        const request = api.get<GetV1UserReturns>("user", []);
-        const enrichedRequest = Object.assign(request, {});
-        return enrichedRequest;
-      },
-      byUserId: {
-        get: ({params}: {params: GetV1UserUserIdParams}) => {
-          const request = api.get<GetV1UserUserIdReturns>("user/$1", [params.userId]);
+    v1: {
+      user: {
+        post: () => {
+          const request = api.post<PostV1UserReturns>("user", []).v(1);
           const enrichedRequest = Object.assign(request, {});
           return enrichedRequest;
         },
-      }
+        get: () => {
+          const request = api.get<GetV1UserReturns>("user", []).v(1);
+          const enrichedRequest = Object.assign(request, {});
+          return enrichedRequest;
+        },
+        byUserId: {
+          get: ({params}: {params: GetV1UserUserIdParams}) => {
+            const request = api.get<GetV1UserUserIdReturns>("user/$1", [params.userId]).v(1);
+            const enrichedRequest = Object.assign(request, {});
+            return enrichedRequest;
+          },
+        }
+      },
     },
   };
 };

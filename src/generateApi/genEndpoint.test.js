@@ -88,12 +88,19 @@ describe("genEndpoint", () => {
      .post<PostV1UserVenueVenueIdPaymentPaymentIdReceiptReturns>(
         "user/venue/$1/payment/$2/receipt",
         [params.venueId, params.paymentId])
-        .data(data).query(query);
+        .data(data).query(query).v(1);
   const enrichedRequest = Object.assign(request, {});
   return enrichedRequest;
   }`)
     );
-    expect(path).toStrictEqual(["user", "venue", "payment", "receipt", "post"]);
+    expect(path).toStrictEqual([
+      "v1",
+      "user",
+      "venue",
+      "payment",
+      "receipt",
+      "post",
+    ]);
     prettify(typeCode);
 
     expect(typeCode).toMatch(
@@ -124,12 +131,12 @@ describe("genEndpoint", () => {
    const request = api
      .post<PostV1UserReturns>(
         "user",
-        []);
+        []).v(1);
   const enrichedRequest = Object.assign(request, {});
   return enrichedRequest;
   }`)
     );
-    expect(path).toStrictEqual(["user", "post"]);
+    expect(path).toStrictEqual(["v1", "user", "post"]);
     prettify(typeCode);
   });
 
@@ -155,7 +162,7 @@ describe("genEndpoint", () => {
     expect(prettify(funcCode)).toBe(
       prettify(`
 () => {
-  const request = api.post<PostV1UserReturns>("user", []);
+  const request = api.post<PostV1UserReturns>("user", []).v(1);
   const enrichedRequest = Object.assign(request, {
     on400: (fn: (p: PostV1User400Response) => void) => {
       request.on<PostV1User400Response>(400, (p) => { fn(p); });
@@ -179,6 +186,6 @@ describe("genEndpoint", () => {
   return enrichedRequest;
 };`)
     );
-    expect(path).toStrictEqual(["user", "post"]);
+    expect(path).toStrictEqual(["v1", "user", "post"]);
   });
 });

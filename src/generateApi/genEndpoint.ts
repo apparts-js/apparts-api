@@ -138,8 +138,10 @@ export const genEndpoint = ({
     path: pathWOVersion,
     params,
     parts,
+    version,
   } = createPath(path, assertionsParams);
-  const methodifiedParts = [...parts, method];
+  funcCalls.push(`.v(${version})`);
+  const methodifiedParts = ["v" + version, ...parts, method];
   const paramStr =
     funcParams.length > 0
       ? `{ ${funcParams.join(",")} }: { ${funcParamTypes.join(";")} }`
