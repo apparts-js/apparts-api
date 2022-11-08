@@ -247,4 +247,12 @@ export abstract class Request<R> {
   finally(...ps) {
     return this._getP().finally(...ps);
   }
+  getRequestConfig() {
+    return {
+      uri: this._uri,
+      params: this._params,
+      query: this._query,
+      data: this._data,
+    };
+  }
 }
