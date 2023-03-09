@@ -12,11 +12,9 @@ const testapi = require("./testapi");
 const { get, put, patch, post, del } = testapi;
 
 let server;
-beforeEach(() => {
-  server = app.listen(3000, () => {});
-});
-afterEach(() => {
+beforeAll(async () => {
   server && server.close();
+  server = app.listen(3000);
 });
 
 describe("Basic request", () => {
@@ -246,6 +244,9 @@ describe("Test offline behavior", () => {
 
 describe("Test token invalid recover", () => {
   test("Should recover from 401", async () => {
+    server && server.close();
+    server = app.listen(3000);
+
     let timeMock = jest
       .spyOn(Date, "now")
       .mockImplementation(() => 1614689026333);
@@ -311,7 +312,7 @@ describe("Test token invalid recover", () => {
     tokenMock.mockRestore();
   });
   test("Should say offline on offline call with token", async () => {
-    server.close();
+    server && server.close();
     server = null;
     const offlineMock = jest.spyOn(testapi, "onNotOnline");
     await expect(get("jwted").authUser({ email: "noob" })).rejects.toBe(false);

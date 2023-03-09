@@ -55,7 +55,7 @@ app.get(
       query: {
         a: { type: "int", optional: true },
         b: { type: "string", optional: true },
-        arst: { type: "array", optional: true },
+        arst: { type: "array", items: { type: "/" }, optional: true },
       },
     },
     async ({ query }) => {
@@ -71,7 +71,7 @@ app.post(
       body: {
         a: { type: "int", optional: true },
         b: { type: "string", optional: true },
-        arst: { type: "array", optional: true },
+        arst: { type: "array", items: { type: "/" }, optional: true },
       },
     },
     async ({ body }) => {
@@ -120,7 +120,7 @@ app.get(
   preparator(
     {
       params: {
-        p1: { type: "array" },
+        p1: { type: "array", items: { type: "/" } },
       },
     },
     async ({ params: { p1 } }) => {
