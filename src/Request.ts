@@ -132,7 +132,7 @@ export abstract class Request<R> {
 
   private async _handleAPI(request, codeCatchers, canRecover401) {
     try {
-      const { data } = await request();
+      const { data, text } = await request();
       this.online();
       return data;
     } catch (error) {

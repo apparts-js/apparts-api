@@ -1,63 +1,108 @@
 /* eslint-env node */
 
-const { HttpError } = require("@apparts/error");
 const express = require("express");
-const { preparator, prepauthTokenJWT } = require("@apparts/types");
+const {
+  HttpError,
+  httpErrorSchema,
+  prepare,
+  validJwt,
+} = require("@apparts/prep");
 const JWT = require("jsonwebtoken");
 const app = express();
+const types = require("@apparts/types");
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 
 app.get(
   "/v/1/get",
-  preparator({}, async () => {
-    return "ok get";
-  })
+  prepare(
+    {
+      receives: {},
+      hasAccess: () => {},
+    },
+    async () => {
+      return "ok get";
+    }
+  )
 );
 
 app.post(
   "/v/1/post",
-  preparator({}, async () => {
-    return "ok post";
-  })
+  prepare(
+    {
+      receives: {},
+      hasAccess: () => {},
+    },
+    async () => {
+      return "ok post";
+    }
+  )
 );
 
 app.put(
   "/v/1/put",
-  preparator({}, async () => {
-    return "ok put";
-  })
+  prepare(
+    {
+      receives: {},
+      hasAccess: () => {},
+    },
+    async () => {
+      return "ok put";
+    }
+  )
 );
 
 app.patch(
   "/v/1/patch",
-  preparator({}, async () => {
-    return "ok patch";
-  })
+  prepare(
+    {
+      receives: {},
+      hasAccess: () => {},
+    },
+    async () => {
+      return "ok patch";
+    }
+  )
 );
 
 app.delete(
   "/v/1/del",
-  preparator({}, async () => {
-    return "ok del";
-  })
+  prepare(
+    {
+      receives: {},
+      hasAccess: () => {},
+    },
+    async () => {
+      return "ok del";
+    }
+  )
 );
 
 app.get(
   "/v/2/get",
-  preparator({}, async () => {
-    return "ok get2";
-  })
+  prepare(
+    {
+      receives: {},
+      hasAccess: () => {},
+    },
+    async () => {
+      return "ok get2";
+    }
+  )
 );
 
 app.get(
   "/v/1/query",
-  preparator(
+  prepare(
     {
-      query: {
-        a: { type: "int", optional: true },
-        b: { type: "string", optional: true },
-        arst: { type: "array", items: { type: "/" }, optional: true },
+      hasAccess: () => {},
+      receives: {
+        query: types.obj({
+          a: types.int().optional(true),
+          b: types.string().optional(true),
+          arst: types.array(types.any()).optional(true),
+        }),
       },
     },
     async ({ query }) => {
@@ -68,12 +113,15 @@ app.get(
 
 app.post(
   "/v/1/body",
-  preparator(
+  prepare(
     {
-      body: {
-        a: { type: "int", optional: true },
-        b: { type: "string", optional: true },
-        arst: { type: "array", items: { type: "/" }, optional: true },
+      hasAccess: () => {},
+      receives: {
+        body: types.obj({
+          a: types.int().optional(true),
+          b: types.string().optional(true),
+          arst: types.array(types.any()).optional(true),
+        }),
       },
     },
     async ({ body }) => {
@@ -84,15 +132,14 @@ app.post(
 
 app.get(
   "/v/1/nope400",
-  preparator(
+  prepare(
     {
-      query: {
-        error: {
-          type: "string",
-          optional: true,
-          default: "This is wrong, fool",
-        },
-        status: { type: "int", optional: true, default: 400 },
+      hasAccess: () => {},
+      receives: {
+        query: types.obj({
+          error: types.string().default("This is wrong, fool"),
+          status: types.int().default(400),
+        }),
       },
     },
     async ({ query: { error, status } }) => {
@@ -103,12 +150,15 @@ app.get(
 
 app.get(
   "/v/1/params/:p1/:p2/:p3/a",
-  preparator(
+  prepare(
     {
-      params: {
-        p1: { type: "string" },
-        p2: { type: "string" },
-        p3: { type: "string" },
+      hasAccess: () => {},
+      receives: {
+        params: types.obj({
+          p1: types.string(),
+          p2: types.string(),
+          p3: types.string(),
+        }),
       },
     },
     async ({ params: { p1, p2, p3 } }) => {
@@ -119,10 +169,13 @@ app.get(
 
 app.get(
   "/v/1/arrparams/:p1",
-  preparator(
+  prepare(
     {
-      params: {
-        p1: { type: "array", items: { type: "/" } },
+      hasAccess: () => {},
+      receives: {
+        params: types.obj({
+          p1: types.array(types.any()),
+        }),
       },
     },
     async ({ params: { p1 } }) => {
@@ -133,17 +186,26 @@ app.get(
 
 app.get(
   "/v/1/jwted",
-  prepauthTokenJWT("abc")({}, async () => {
-    return "ok";
-  })
+  prepare(
+    {
+      hasAccess: validJwt("abc"),
+      receives: {},
+    },
+    async () => {
+      return "ok";
+    }
+  )
 );
 
 app.get(
   "/v/1/apiToken",
-  preparator(
+  prepare(
     {
-      query: {
-        expiresIn: { type: "string", default: "100000" },
+      hasAccess: () => {},
+      receives: {
+        query: types.obj({
+          expiresIn: types.string().default("100000"),
+        }),
       },
     },
     async ({ query: { expiresIn } }) => {
@@ -154,13 +216,25 @@ app.get(
 
 app.post(
   "/v/1/user/venue/:venueId/order/:orderId/payment/:paymentId/receipt",
-  preparator(
+  prepare(
     {
-      params: {
-        venueId: { type: "int" },
-        orderId: { type: "int" },
-        paymentId: { type: "int" },
+      hasAccess: () => {},
+      receives: {
+        params: types.obj({
+          venueId: types.int(),
+          orderId: types.int(),
+          paymentId: types.int(),
+        }),
       },
+      returns: [
+        types.value("ok"),
+        types.obj({
+          venueId: types.int(),
+          orderId: types.int(),
+          paymentId: types.int(),
+        }),
+        httpErrorSchema(400, "Something went wrong"),
+      ],
     },
     async ({ params: { venueId, orderId, paymentId } }) => {
       if (venueId >= 10) {
@@ -170,21 +244,6 @@ app.post(
         return "ok";
       }
       return { venueId, orderId, paymentId };
-    },
-    {
-      returns: [
-        { status: 200, value: "ok" },
-        {
-          status: 200,
-          type: "object",
-          keys: {
-            venueId: { type: "int" },
-            orderId: { type: "int" },
-            paymentId: { type: "int" },
-          },
-        },
-        { status: 400, error: "Something went wrong" },
-      ],
     }
   )
 );
