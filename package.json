@@ -1,6 +1,6 @@
 {
   "name": "@apparts/api",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "description": "A unified API package for @apparts",
   "main": "build/index.js",
   "types": "build/index.d.ts",
