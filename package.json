@@ -60,6 +60,9 @@
     "tsutils": "^3.21.0",
     "typescript": "^4.5.5"
   },
+  "optionalDependencies": {
+    "fsevents": "^2.3.2"
+  },
   "testEnvironment": "node",
   "volta": {
     "node": "14.18.2",
