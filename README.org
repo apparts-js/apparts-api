@@ -1,4 +1,4 @@
-#+TITLE: Frontend-API
+#+TITLE: @apparts/api
 #+DATE: [2019-02-07 Thu]
 #+AUTHOR: Philipp Uhl
 
@@ -152,5 +152,75 @@ Example:
     // error-unspecific cleanup to do, this would be a good place:
   
     /* setLoading(false); */
+  }
+#+END_SRC
+
+* Generate API SDK
+
+=@apparts/api= supports generating a fully typed TypeScript SDK to
+access an API that is defined through an API description as generated
+by =@apparts/prep=.
+
+You might want to install =prettier= (=npm i -D prettier=) to
+improve the output.
+
+To generate the SDK, run the following:
+
+#+BEGIN_SRC js
+import * as prettier from "prettier";
+const prettify = (src) => prettier.format(src, { parser: "typescript" });
+
+// The API definition as output by the getApi function from @apparts/prep
+import { testApi } from "./api-description.json";
+import { genFile, EndpointDefinition } from "@apparts/api";
+
+// Pipe to file or write to fs from here
+console.log(prettify(genFile(testApi.routes as EndpointDefinition[])));
+#+END_SRC
+
+
+The resulting API SDK code exports the function =createApi= which
+expects one parameter: the api as exported from =useApi(MyRequest)= as
+setup above.
+
+In your application:
+
+#+BEGIN_SRC js
+import { createApi } from "./<path to the generated file>"
+
+// setup MyRequest, etc.
+const apiRaw = useApi(MyRequest);
+export const api = createApi(apiRaw);
+#+END_SRC
+
+The resulting api object contains all API endpoints in the following
+manner:
+
+An endpoint =GET /v/1/user/:userId/info= with the returns
+- code 200, =<user obj>=
+- code 404, ={ error: "User not found" }=
+- code 404, ={ error: "User info not found" }=
+
+Can be accessed like this:
+
+#+BEGIN_SRC js
+  try {
+    const res = await api.user.info.get({ params: { userId }, /* data, query */})
+    // Optional error catchers. Matching checked in order of function
+    // usage. So in this example, first the catcher for { status: 404,
+    // error: "user not found" } is checked, then { status: 404, error:
+    // "user info not found" }, at last all status 404 responses.
+          .on404UserNotFound(/* catcher fn */)
+          .on404UserInfoNotFound(/* catcher fn */)
+          .on404(/* catcher fn */) // catch all for code 404
+
+    // a Request object is returned, just with the normal
+    // get/put/post/etc functions from this package. Hence, you can call
+    // all helper functinos as wanted. E.g.:
+          .auth(user);
+  } catch (e) {
+    // If e is not false, then, no error-catcher caught the error and
+    // you might want to take care of it
+    e && alert(e);
   }
 #+END_SRC

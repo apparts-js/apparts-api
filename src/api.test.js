@@ -2,14 +2,12 @@
  * @jest-environment node
  */
 
-const request = require("supertest");
-const axios = require("axios");
-
 const myEndpoint = require("./testserver");
 const app = myEndpoint.app;
 
-const testapi = require("./testapi");
-const { get, put, patch, post, del } = testapi;
+const testapi = require("./testApi");
+const { getApi } = require("./testApi");
+const { get, put, patch, post, del } = getApi(3000);
 
 let server;
 beforeAll(async () => {
@@ -100,7 +98,7 @@ describe("Requests with params", () => {
 });
 
 describe("Different API Version", () => {
-  test("Test v(2)", async () => {
+  test("v(2)", async () => {
     const res = await get("get").v(2);
     expect(res).toBe("ok get2");
   });
@@ -151,7 +149,7 @@ describe("Body params", () => {
 
 describe("Error catchers", () => {
   test("Get an 400", async () => {
-    const mockOn = jest.fn((e) => {});
+    const mockOn = jest.fn(() => {});
 
     await expect(get("nope400").on(400, mockOn)).rejects.toBe(false);
 
@@ -162,8 +160,8 @@ describe("Error catchers", () => {
   });
 
   test("Get an 400 with specific code", async () => {
-    const mockOn = jest.fn((e) => {});
-    const mockOn2 = jest.fn((e) => {});
+    const mockOn = jest.fn(() => {});
+    const mockOn2 = jest.fn(() => {});
     await expect(
       get("nope400")
         .query({ error: "My specific error" })
@@ -204,7 +202,7 @@ describe("Error catchers", () => {
   });
   test("Middleware catcher should run after manual catchers", async () => {
     const onlineMock = jest.spyOn(testapi, "online");
-    const mockOn = jest.fn((e) => {});
+    const mockOn = jest.fn(() => {});
     await expect(
       get("nope400").query({ status: 401 }).on(401, mockOn)
     ).rejects.toBe(false);

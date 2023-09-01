@@ -1,3 +1,5 @@
+/* eslint-env node */
+
 const { HttpError } = require("@apparts/error");
 const express = require("express");
 const { preparator, prepauthTokenJWT } = require("@apparts/types");
@@ -146,6 +148,43 @@ app.get(
     },
     async ({ query: { expiresIn } }) => {
       return JWT.sign({ action: "login" }, "abc", { expiresIn });
+    }
+  )
+);
+
+app.post(
+  "/v/1/user/venue/:venueId/order/:orderId/payment/:paymentId/receipt",
+  preparator(
+    {
+      params: {
+        venueId: { type: "int" },
+        orderId: { type: "int" },
+        paymentId: { type: "int" },
+      },
+    },
+    async ({ params: { venueId, orderId, paymentId } }) => {
+      if (venueId >= 10) {
+        return new HttpError(400, "Something went wrong");
+      }
+      if (orderId >= 10) {
+        return "ok";
+      }
+      return { venueId, orderId, paymentId };
+    },
+    {
+      returns: [
+        { status: 200, value: "ok" },
+        {
+          status: 200,
+          type: "object",
+          keys: {
+            venueId: { type: "int" },
+            orderId: { type: "int" },
+            paymentId: { type: "int" },
+          },
+        },
+        { status: 400, error: "Something went wrong" },
+      ],
     }
   )
 );

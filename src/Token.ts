@@ -1,10 +1,16 @@
 const APITOKEN_THRESHOLD = 1000 * 60;
 
-const tokens = {};
-class Token {
-  constructor(user) {
+const tokens: { [k: string]: Token<unknown> } = {};
+export abstract class Token<User> {
+  protected _user: User;
+  private _renewing?: Promise<string>;
+  protected _apiToken?: string;
+
+  constructor(user: User) {
     this._user = user;
-    this.renew().catch(() => {});
+    this.renew().catch(() => {
+      /* empty */
+    });
   }
 
   async getToken() {
@@ -18,18 +24,16 @@ class Token {
     };
   }
 
-  async renewAPIToken(user) {
-    throw "Token not overloaded correctly: renewAPIToken missing";
-  }
+  abstract renewAPIToken(user: User): Promise<string>;
 
   async renew() {
     if (this._renewing) {
       return await this._renewing.finally();
     }
-    this._apiToken = null;
+    this._apiToken = undefined;
     this._renewing = new Promise((res, rej) => {
       const timeout = setTimeout(() => {
-        this._renewing = null;
+        this._renewing = undefined;
         rej();
         // offline
         // TODO: something
@@ -38,28 +42,29 @@ class Token {
         .then((token) => {
           clearTimeout(timeout);
           this._apiToken = token;
-          this._renewing = null;
+          this._renewing = undefined;
           res(token);
         })
         .catch((e) => {
           clearTimeout(timeout);
-          this._renewing = null;
+          this._renewing = undefined;
           rej(e);
         });
     });
     return await this._renewing;
   }
 
-  static getUserKey(user) {
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  static getUserKey(user: unknown): string {
     throw "Token not overloaded correctly: getUserKey missing";
   }
 
-  static getAPIToken(user) {
+  static getAPIToken<User>(user: User) {
     if (!tokens[this.getUserKey(user)]) {
-      tokens[this.getUserKey(user)] = new this.prototype.constructor(user);
+      tokens[this.getUserKey(user)] = new (this.prototype.constructor as new (
+        u: User
+      ) => Token<User>)(user);
     }
     return tokens[this.getUserKey(user)];
   }
 }
-
-module.exports = Token;
