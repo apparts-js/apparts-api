@@ -31,7 +31,7 @@ describe("createTypeFsFromType", () => {
               type: "object",
               keys: {
                 UstId: { type: "int" },
-                entityName: { type: "bool" },
+                entityName: { type: "boolean" },
               },
               default: () => ({ UstId: 1, entityName: true }),
             },
