@@ -10,7 +10,6 @@ const rules = {
   indent: "off",
   "@typescript-eslint/indent": "off",
   "@typescript-eslint/no-explicit-any": "off",
-  "@typescript-eslint/switch-exhaustiveness-check": "error",
 };
 
 module.exports = {
@@ -54,9 +53,13 @@ module.exports = {
       parserOptions: {
         project: "tsconfig.json",
         sourceType: "module",
+        project: "./tsconfig.json",
+        tsconfigRootDir: __dirname,
+        projectService: true,
       },
       rules: {
         "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/switch-exhaustiveness-check": "error",
       },
     },
   ],
