@@ -10,6 +10,7 @@ const rules = {
   indent: "off",
   "@typescript-eslint/indent": "off",
   "@typescript-eslint/no-explicit-any": "off",
+  "@typescript-eslint/switch-exhaustiveness-check": "error",
 };
 
 module.exports = {
