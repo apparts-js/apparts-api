@@ -192,7 +192,7 @@ describe("Error catchers", () => {
     const tokenInvMock = jest.spyOn(testapi, "onInvToken");
 
     await expect(
-      get("nope400").query({ status: 401, error: "Unauthorized" })
+      get("nope400").query({ status: 401, error: "Token invalid" })
     ).rejects.toBe(false);
 
     expect(onlineMock.mock.calls.length).toBe(1);

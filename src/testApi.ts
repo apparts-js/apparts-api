@@ -80,7 +80,7 @@ export const getApi = (port: number) => {
 
       this.on(410, module.exports.on410);
       this.on(
-        { status: 401, error: "Unauthorized" },
+        { status: 401, error: "Token invalid" },
         module.exports.onInvToken
       );
       this.on(401, module.exports.logout);
