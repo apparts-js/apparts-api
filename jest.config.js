@@ -10,6 +10,10 @@ module.exports = {
     //    "^.+\\.tsx?$": "ts-jest",
     "^.+\\.[tj]s$": "ts-jest",
   },
+  moduleNameMapper: {
+    // Bug with Axios https://github.com/axios/axios/issues/6135
+    "^axios$": "axios/dist/node/axios.cjs",
+  },
   moduleFileExtensions: ["ts", "js", "json", "node"],
   testPathIgnorePatterns: ["build", "node_modules"],
 };
