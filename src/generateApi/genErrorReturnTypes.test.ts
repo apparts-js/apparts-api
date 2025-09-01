@@ -108,31 +108,63 @@ describe("prepareErrors", () => {
   it("should group errors", async () => {
     expect(
       prepareErrors([
-        { status: 400, error: "error" },
-        { status: 401, error: "error" },
-        { status: 401, error: "other error" },
+        { status: 400, error: "error", returnType: { type: "string" } },
+        { status: 401, error: "error", returnType: { type: "string" } },
+        { status: 401, error: "other error", returnType: { type: "string" } },
         {
           status: 417,
           error: "Could not leave shift",
-          restType: {
-            reason: { type: "string" },
+          returnType: {
+            type: "string",
           },
         },
-        { status: 402, type: "string" },
+        {
+          status: 402,
+          returnType: {
+            type: "string",
+          },
+        },
       ])
     ).toStrictEqual({
-      400: [{ status: 400, error: "error" }],
-      401: [
-        { status: 401, error: "error" },
-        { status: 401, error: "other error" },
+      400: [
+        {
+          status: 400,
+          error: "error",
+          returnType: {
+            type: "string",
+          },
+        },
       ],
-      402: [{ status: 402, type: "string" }],
+      401: [
+        {
+          status: 401,
+          error: "error",
+          returnType: {
+            type: "string",
+          },
+        },
+        {
+          status: 401,
+          error: "other error",
+          returnType: {
+            type: "string",
+          },
+        },
+      ],
+      402: [
+        {
+          status: 402,
+          returnType: {
+            type: "string",
+          },
+        },
+      ],
       417: [
         {
           status: 417,
           error: "Could not leave shift",
-          restType: {
-            reason: { type: "string" },
+          returnType: {
+            type: "string",
           },
         },
       ],
@@ -141,14 +173,44 @@ describe("prepareErrors", () => {
   it("should remove duplicate errors", async () => {
     expect(
       prepareErrors([
-        { status: 400, error: "error" },
-        { status: 400, error: "error" },
-        { status: 400, error: "other error" },
+        {
+          status: 400,
+          error: "error",
+          returnType: {
+            type: "string",
+          },
+        },
+        {
+          status: 400,
+          error: "error",
+          returnType: {
+            type: "string",
+          },
+        },
+        {
+          status: 400,
+          error: "other error",
+          returnType: {
+            type: "string",
+          },
+        },
       ])
     ).toStrictEqual({
       400: [
-        { status: 400, error: "error" },
-        { status: 400, error: "other error" },
+        {
+          status: 400,
+          error: "error",
+          returnType: {
+            type: "string",
+          },
+        },
+        {
+          status: 400,
+          error: "other error",
+          returnType: {
+            type: "string",
+          },
+        },
       ],
     });
   });

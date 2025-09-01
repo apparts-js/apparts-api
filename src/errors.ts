@@ -6,3 +6,6 @@ export class PreparedStatementError extends Error {
     this.name = "PreparedStatementError";
   }
 }
+
+export class TokenInvalidError extends Error {}
+export class RetryError extends Error {}

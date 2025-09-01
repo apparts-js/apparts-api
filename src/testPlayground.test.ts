@@ -1,17 +1,16 @@
-/**
- * @jest-environment node
- */
-const myEndpoint = require("./testserver");
-const app = myEndpoint.app;
+import { vi } from "vitest";
+import { app } from "./testserver";
 
-const { api } = require("./testPlayground");
+import { api } from "./testPlayground";
 
 let server;
-beforeEach(() => {
-  server = app.listen(3001, () => {});
+beforeAll(async () => {
+  await new Promise((resolve) => (server = app.listen(3001, resolve)));
 });
-afterEach(() => {
-  server && server.close();
+afterAll(() => {
+  if (server) {
+    server.close();
+  }
 });
 
 describe("Generated API", () => {
@@ -31,7 +30,7 @@ describe("Generated API", () => {
   });
 
   it("should return catch error", async () => {
-    const mockOn = jest.fn(() => {});
+    const mockOn = vi.fn(() => {});
 
     await expect(
       api.user.venue.order.payment.receipt
@@ -48,8 +47,10 @@ describe("Generated API", () => {
         .on400(mockOn)
     ).rejects.toBe(false);
     expect(mockOn.mock.calls.length).toBe(1);
-    expect(mockOn.mock.calls[0][0]).toMatchObject({
-      error: "Something went wrong",
-    });
+    expect(mockOn.mock.calls[0]).toMatchObject([
+      {
+        error: "Something went wrong",
+      },
+    ]);
   });
 });

@@ -1,18 +1,15 @@
-/**
- * @jest-environment node
- */
+import { vi } from "vitest";
 
-const myEndpoint = require("./testserver");
-const app = myEndpoint.app;
-
-const testapi = require("./testApi");
-const { getApi } = require("./testApi");
-const { get, put, patch, post, del } = getApi(3000);
+import { app } from "./testserver";
+import { getApi, functions as testapi } from "./testApi";
 import { PreparedStatementError } from "./errors";
+const { get, put, patch, post, del } = getApi(3000);
 
 let server;
 beforeAll(async () => {
-  server && server.close();
+  if (server) {
+    server.close();
+  }
   server = app.listen(3000);
 });
 
@@ -144,19 +141,22 @@ describe("Error retriers", () => {
 
 describe("Error catchers", () => {
   test("Get an 400", async () => {
-    const mockOn = jest.fn(() => {});
+    const mockOn = vi.fn(() => {});
 
     await expect(get("nope400").on(400, mockOn)).rejects.toBe(false);
 
     expect(mockOn.mock.calls.length).toBe(1);
-    expect(mockOn.mock.calls[0][0]).toMatchObject({
-      error: "This is wrong, fool",
-    });
+    expect(mockOn.mock.calls[0]).toMatchObject([
+      {
+        error: "This is wrong, fool",
+      },
+      {},
+    ]);
   });
 
   test("Get an 400 with specific code", async () => {
-    const mockOn = jest.fn(() => {});
-    const mockOn2 = jest.fn(() => {});
+    const mockOn = vi.fn(() => {});
+    const mockOn2 = vi.fn(() => {});
     await expect(
       get("nope400")
         .query({ error: "My specific error" })
@@ -167,14 +167,17 @@ describe("Error catchers", () => {
     expect(mockOn2.mock.calls.length).toBe(0);
 
     expect(mockOn.mock.calls.length).toBe(1);
-    expect(mockOn.mock.calls[0][0]).toMatchObject({
-      error: "My specific error",
-    });
+    expect(mockOn.mock.calls[0]).toMatchObject([
+      {
+        error: "My specific error",
+      },
+      {},
+    ]);
   });
 
   test("Middleware catcher", async () => {
-    const onlineMock = jest.spyOn(testapi, "online");
-    const logoutMock = jest.spyOn(testapi, "logout");
+    const onlineMock = vi.spyOn(testapi, "online");
+    const logoutMock = vi.spyOn(testapi, "logout");
     await expect(get("nope400").query({ status: 401 })).rejects.toBe(false);
 
     expect(onlineMock.mock.calls.length).toBe(1);
@@ -183,11 +186,11 @@ describe("Error catchers", () => {
     logoutMock.mockRestore();
   });
   test("Middleware catcher should preserve order", async () => {
-    const onlineMock = jest.spyOn(testapi, "online");
-    const tokenInvMock = jest.spyOn(testapi, "onInvToken");
+    const onlineMock = vi.spyOn(testapi, "online");
+    const tokenInvMock = vi.spyOn(testapi, "onInvToken");
 
     await expect(
-      get("nope400").query({ status: 401, error: "Unauthorized" })
+      get("nope400").query({ status: 401, error: "Token invalid" })
     ).rejects.toBe(false);
 
     expect(onlineMock.mock.calls.length).toBe(1);
@@ -196,8 +199,8 @@ describe("Error catchers", () => {
     tokenInvMock.mockRestore();
   });
   test("Middleware catcher should run after manual catchers", async () => {
-    const onlineMock = jest.spyOn(testapi, "online");
-    const mockOn = jest.fn(() => {});
+    const onlineMock = vi.spyOn(testapi, "online");
+    const mockOn = vi.fn(() => {});
     await expect(
       get("nope400").query({ status: 401 }).on(401, mockOn)
     ).rejects.toBe(false);
@@ -205,9 +208,12 @@ describe("Error catchers", () => {
     expect(onlineMock.mock.calls.length).toBe(1);
 
     expect(mockOn.mock.calls.length).toBe(1);
-    expect(mockOn.mock.calls[0][0]).toMatchObject({
-      error: "This is wrong, fool",
-    });
+    expect(mockOn.mock.calls[0]).toMatchObject([
+      {
+        error: "This is wrong, fool",
+      },
+      {},
+    ]);
 
     onlineMock.mockRestore();
   });
@@ -215,9 +221,9 @@ describe("Error catchers", () => {
 
 describe("Test offline behavior", () => {
   test("Online detected", async () => {
-    const onlineMock = jest.spyOn(testapi, "online");
+    const onlineMock = vi.spyOn(testapi, "online");
 
-    await expect(await get("get")).toBe("ok get");
+    expect(await get("get")).toBe("ok get");
 
     expect(onlineMock.mock.calls.length).toBe(1);
     onlineMock.mockRestore();
@@ -226,7 +232,7 @@ describe("Test offline behavior", () => {
   test("Middleware catcher", async () => {
     server.close();
     server = null;
-    const offlineMock = jest.spyOn(testapi, "onNotOnline");
+    const offlineMock = vi.spyOn(testapi, "onNotOnline");
 
     await expect(get("nope400").query({ status: 401 })).rejects.toBe(false);
 
@@ -237,21 +243,27 @@ describe("Test offline behavior", () => {
 
 describe("Test token invalid recover", () => {
   test("Should recover from 401", async () => {
-    server && server.close();
-    server = app.listen(3000);
+    if (server) {
+      server.close();
+    }
+    await new Promise((res) => {
+      server = app.listen(3000, res);
+    });
 
-    let timeMock = jest
+    let timeMock = vi
       .spyOn(Date, "now")
       .mockImplementation(() => 1614689026333);
 
-    const onlineMock = jest.spyOn(testapi, "online");
-    const renewMock = jest.spyOn(testapi, "renewed");
+    const onlineMock = vi.spyOn(testapi, "online");
+    const renewMock = vi.spyOn(testapi, "renewed");
 
-    const jwt = await get("apiToken").query({ expiresIn: "1000" });
+    const jwt = await get<string>("apiToken").query({ expiresIn: "1000" });
+
     timeMock.mockRestore();
-    timeMock = jest
+    timeMock = vi
       .spyOn(Date, "now")
       .mockImplementation(() => 1614689026333 + 1000 * 60 * 5);
+
     await expect(
       get("jwted").authUser({ email: "test", apiToken: jwt })
     ).resolves.toBe("ok");
@@ -263,12 +275,12 @@ describe("Test token invalid recover", () => {
     timeMock.mockRestore();
   });
   test("Should reuse token", async () => {
-    const onlineMock = jest.spyOn(testapi, "online");
-    const timeMock = jest
+    const onlineMock = vi.spyOn(testapi, "online");
+    const timeMock = vi
       .spyOn(Date, "now")
       .mockImplementation(() => 1614689026333 + 1000 * 60 * 6);
 
-    await expect(await get("jwted").authUser({ email: "test" })).toBe("ok");
+    expect(await get("jwted").authUser({ email: "test" })).toBe("ok");
     expect(onlineMock.mock.calls.length).toBe(1);
 
     onlineMock.mockRestore();
@@ -276,13 +288,13 @@ describe("Test token invalid recover", () => {
   });
 
   test("Should say token issue on token issue", async () => {
-    const tokenMock = jest
+    const tokenMock = vi
       .spyOn(testapi, "getToken")
       .mockImplementation(async () => {
         return "nayayayay";
       });
 
-    const onInvTokenMock = jest.spyOn(testapi, "onInvToken");
+    const onInvTokenMock = vi.spyOn(testapi, "onInvToken");
     await expect(get("jwted").authUser({ email: "boon" })).rejects.toBe(false);
 
     expect(onInvTokenMock.mock.calls.length).toBe(1);
@@ -290,13 +302,13 @@ describe("Test token invalid recover", () => {
     tokenMock.mockRestore();
   });
   test("Should say offline on offline token recover", async () => {
-    const offlineMock = jest.spyOn(testapi, "onNotOnline");
-    const tokenMock = jest
+    const offlineMock = vi.spyOn(testapi, "onNotOnline");
+    const tokenMock = vi
       .spyOn(testapi, "getToken")
       .mockImplementation(async () => {
         server.close();
         server = null;
-        const token = await get("apiToken");
+        const token = (await get("apiToken")) as string;
         return token;
       });
     await expect(get("jwted").authUser({ email: "noob" })).rejects.toBe(false);
@@ -305,9 +317,11 @@ describe("Test token invalid recover", () => {
     tokenMock.mockRestore();
   });
   test("Should say offline on offline call with token", async () => {
-    server && server.close();
+    if (server) {
+      server.close();
+    }
     server = null;
-    const offlineMock = jest.spyOn(testapi, "onNotOnline");
+    const offlineMock = vi.spyOn(testapi, "onNotOnline");
     await expect(get("jwted").authUser({ email: "noob" })).rejects.toBe(false);
     expect(offlineMock.mock.calls.length).toBe(1);
     offlineMock.mockRestore();

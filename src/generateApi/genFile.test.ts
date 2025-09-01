@@ -70,7 +70,6 @@ describe("genFile", () => {
         assertions: {},
         returns: [{ status: 200, value: "ok" }],
         title: "Add user",
-        options: {},
       },
       {
         method: "get",
@@ -78,7 +77,6 @@ describe("genFile", () => {
         assertions: {},
         returns: [{ status: 200, value: "ok" }],
         title: "Get user",
-        options: {},
       },
       {
         method: "get",
@@ -86,7 +84,6 @@ describe("genFile", () => {
         assertions: { params: { userId: { type: "id" } } },
         returns: [{ status: 200, value: "ok" }],
         title: "Get user by id",
-        options: {},
       },
     ]);
     expect(prettify(file)).toBe(

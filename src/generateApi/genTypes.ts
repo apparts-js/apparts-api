@@ -36,7 +36,7 @@ export const createTypeFsOpts = (type: Type) => {
   return code;
 };
 
-export const createTypeFsFromType = (type: Type) => {
+export const createTypeFsFromType = (type: Type): string => {
   const opts = createTypeFsOpts(type);
 
   if ("value" in type) {
@@ -73,20 +73,26 @@ ${type.alternatives.map((alt) => createTypeFsFromType(alt)).join(",")}
       return `schema.hex()${opts}`;
     case "uuidv4":
       return `schema.uuidv4()${opts}`;
+    case "uuid":
+      return `schema.uuid()${opts}`;
     case "base64":
       return `schema.base64()${opts}`;
     case "email":
       return `schema.email()${opts}`;
+    case "phoneISD":
+      return `schema.phoneISD()${opts}`;
     case "null":
       return `schema.nill()${opts}`;
     case "/":
       return `schema.any()${opts}`;
     case "id":
       return `schema.int().semantic("id")${opts}`;
-    /* case "id":
-         return `schema.string().semantic("id")${opts}`;*/
     case "password":
       return `schema.string().semantic("password")${opts}`;
+    case "date":
+      return `schema.int().semantic("date")${opts}`;
+    case "daytime":
+      return `schema.int().semantic("daytime")${opts}`;
     case "time":
       return `schema.int().semantic("time")${opts}`;
     default:

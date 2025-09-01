@@ -12,14 +12,14 @@ export const nameFromString = (str: string) =>
   );
 export const nameFromPath = nameFromString;
 
-export const mapEndpointMethod = (epMethod: string) =>
+export const mapEndpointMethod = (epMethod: string): string =>
   ({
     get: "get",
     put: "put",
     post: "post",
     patch: "patch",
     delete: "del",
-  }[epMethod]);
+  }[epMethod] ?? "");
 
 export const createPath = (path: string, paramsType: { [k: string]: Type }) => {
   let pathWOVersion = path.split("/").slice(3).join("/");
@@ -30,7 +30,7 @@ export const createPath = (path: string, paramsType: { [k: string]: Type }) => {
   const params: string[] = [];
   let counter = 1;
   for (const param in paramsType) {
-    pathWOVersion = pathWOVersion.replace(":" + param, "$" + counter++);
+    pathWOVersion = pathWOVersion.replace(":" + param, "$" + String(counter++));
     params.push(param);
   }
 

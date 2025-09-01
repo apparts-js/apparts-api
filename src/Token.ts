@@ -19,7 +19,7 @@ export abstract class Token<User> {
     }
     return {
       headers: {
-        Authorization: "Bearer " + this._apiToken,
+        Authorization: "Bearer " + String(this._apiToken),
       },
     };
   }
@@ -34,7 +34,7 @@ export abstract class Token<User> {
     this._renewing = new Promise((res, rej) => {
       const timeout = setTimeout(() => {
         this._renewing = undefined;
-        rej();
+        rej(new Error("Taking too long to renew token"));
         // offline
         // TODO: something
       }, APITOKEN_THRESHOLD);
@@ -45,25 +45,24 @@ export abstract class Token<User> {
           this._renewing = undefined;
           res(token);
         })
-        .catch((e) => {
+        .catch((e: unknown) => {
           clearTimeout(timeout);
           this._renewing = undefined;
-          rej(e);
+          rej(e as Error);
         });
     });
     return await this._renewing;
   }
 
-  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  static getUserKey(user: unknown): string {
+  static getUserKey(_user: unknown): string {
     throw "Token not overloaded correctly: getUserKey missing";
   }
 
-  static getAPIToken<User>(user: User) {
+  static getAPIToken(user: unknown) {
     if (!tokens[this.getUserKey(user)]) {
       tokens[this.getUserKey(user)] = new (this.prototype.constructor as new (
-        u: User
-      ) => Token<User>)(user);
+        u: unknown
+      ) => Token<unknown>)(user);
     }
     return tokens[this.getUserKey(user)];
   }

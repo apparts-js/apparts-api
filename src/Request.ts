@@ -1,6 +1,10 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { Token } from "./Token";
-import { PreparedStatementError } from "./errors";
+import {
+  PreparedStatementError,
+  RetryError,
+  TokenInvalidError,
+} from "./errors";
 
 type ErrorIdentifier = number | { error: string; status: number };
 
@@ -21,11 +25,11 @@ export abstract class Request<R> {
   private _apiVersion: string | number;
   private _uri: string;
   private _params: unknown[];
-  private _method: <Response = AxiosResponse<R>>(
+  private _method: (
     url: string,
     data?: any,
     config?: AxiosRequestConfig
-  ) => Promise<Response>;
+  ) => Promise<AxiosResponse<R>>;
   private _query: Record<string, unknown> | undefined;
   protected _auth;
   private _data: unknown;
@@ -35,19 +39,20 @@ export abstract class Request<R> {
 
   constructor(
     uri: string,
-    params: unknown[] = [],
-    method: <Response = AxiosResponse<R>>(
+    params: unknown = [],
+    method: (
       url: string,
       data?: any,
       config?: AxiosRequestConfig
-    ) => Promise<Response>
+    ) => Promise<AxiosResponse<R>>
   ) {
     this._codeCatchers = [];
     this._apiVersion = this.getAPIVersion();
     this._uri = uri;
-    this._params = params;
-    if (!Array.isArray(this._params)) {
-      this._params = [this._params];
+    if (!Array.isArray(params)) {
+      this._params = [params];
+    } else {
+      this._params = params;
     }
     this._method = method;
     return this;
@@ -70,6 +75,7 @@ export abstract class Request<R> {
     this._query = params;
     return this;
   }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   on<T>(status: ErrorIdentifier, next: (data: T, error: unknown) => void) {
     if (typeof status !== "number") {
       if (typeof status !== "object") {
@@ -148,15 +154,15 @@ export abstract class Request<R> {
       );
       return res;
     } catch (e) {
-      if (e === "Retry") {
+      if (e instanceof RetryError) {
         return await this.run();
       }
 
-      if (e === "Token invalid" && !this._secondTry) {
+      if (e instanceof TokenInvalidError && !this._secondTry) {
         this._secondTry = true;
         await this._auth.renew();
         return await this.run();
-      } else if (e === "Token invalid") {
+      } else if (e instanceof TokenInvalidError) {
         this.notAuthenticated();
       }
       throw e;
@@ -164,7 +170,7 @@ export abstract class Request<R> {
   }
 
   private async _handleAPI(
-    request: () => Promise<AxiosResponse<any>>,
+    request: () => Promise<AxiosResponse>,
     canRecover401: boolean
   ): Promise<any> {
     try {
@@ -181,7 +187,7 @@ export abstract class Request<R> {
           (data || {}).error === "Token invalid" &&
           canRecover401
         ) {
-          return Promise.reject("Token invalid");
+          return Promise.reject(new TokenInvalidError());
         }
 
         const retrierer = this._retryOn.find(({ status }) =>
@@ -192,7 +198,7 @@ export abstract class Request<R> {
             await new Promise((res) => setTimeout(res, retrierer.delay));
           }
           retrierer.retryCount--;
-          return Promise.reject("Retry");
+          return Promise.reject(new RetryError());
         }
 
         const catcher = this._codeCatchers.find(({ status }) =>
@@ -205,11 +211,12 @@ export abstract class Request<R> {
 
         if (catcher) {
           catcher.next(error.response && error.response.data, error);
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
           return Promise.reject(false);
         }
       }
 
-      return Promise.reject(error);
+      return Promise.reject(error as Error);
     }
   }
 
@@ -248,7 +255,7 @@ export abstract class Request<R> {
 
     const preTransformUri = uri;
     params.forEach((param, i) => {
-      if (!uri.match(new RegExp("\\$" + (i + 1)))) {
+      if (!uri.match(new RegExp("\\$" + String(i + 1)))) {
         throw new PreparedStatementError(
           "Too many parameters for prepared statement",
           uri
@@ -260,7 +267,7 @@ export abstract class Request<R> {
       }
 
       uri = uri.replace(
-        new RegExp("\\$" + (i + 1), "g"),
+        new RegExp("\\$" + String(i + 1), "g"),
         encodeURIComponent(String(val))
       );
     });

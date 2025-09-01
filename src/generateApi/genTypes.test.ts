@@ -6,7 +6,7 @@ describe("createTypeFsFromType", () => {
     expect(
       prettify(
         createTypeFsFromType({
-          status: 200,
+          //          status: 200,
           type: "object",
           keys: {
             id: {
@@ -38,7 +38,7 @@ describe("createTypeFsFromType", () => {
             defaultLanguage: {
               type: "oneOf",
               alternatives: [{ value: "de" }, { value: "en" }],
-              derived: "de",
+              derived: true,
             },
             "allowed.OrderStates": {
               type: "object",

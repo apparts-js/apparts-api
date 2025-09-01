@@ -48,12 +48,12 @@ export const genFile = (api: EndpointDefinition[], options?: Options) => {
   let fnHirarchy = {};
   let counter = 0;
   for (const endpoint of endpoints) {
-    fnHirarchy = assocPath(endpoint.path, `$${counter++}`, fnHirarchy);
+    fnHirarchy = assocPath(endpoint.path, `$${String(counter++)}`, fnHirarchy);
   }
   let fnCode = JSON.stringify(fnHirarchy);
   counter = 0;
   for (const endpoint of endpoints) {
-    fnCode = fnCode.replace(`"$${counter++}"`, endpoint.funcCode);
+    fnCode = fnCode.replace(`"$${String(counter++)}"`, endpoint.funcCode);
   }
 
   return `
