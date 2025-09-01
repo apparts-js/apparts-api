@@ -1,23 +1,37 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { Token } from "./Token";
+import { PreparedStatementError } from "./errors";
+
+type CodeCatcher = {
+  status: number | { error: string; status: number };
+  next: (data: any, error: unknown) => void;
+};
 
 export abstract class Request<R> {
-  private _codeCatchers;
+  private _codeCatchers: CodeCatcher[];
   private _apiVersion: string | number;
-  private _uri;
-  private _params;
-  private _method;
-  private _query;
+  private _uri: string;
+  private _params: unknown[];
+  private _method: <T = any, R = AxiosResponse<T>>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ) => Promise<R>;
+  private _query: Record<string, unknown> | undefined;
   protected _auth;
-  private _data;
-  private _settings;
-  private _secondTry;
-  private _p;
+  private _data: unknown;
+  private _settings: AxiosRequestConfig | undefined;
+  private _secondTry = false;
+  private _p: Promise<any> | undefined;
 
   constructor(
     uri: string,
     params: unknown[] = [],
-    method: (a, b, c) => Promise<R>
+    method: <T = any, R = AxiosResponse<T>>(
+      url: string,
+      data?: any,
+      config?: AxiosRequestConfig
+    ) => Promise<R>
   ) {
     this._codeCatchers = [];
     this._apiVersion = this.getAPIVersion();
@@ -40,7 +54,7 @@ export abstract class Request<R> {
     /* dummy */
   }
 
-  query(params: unknown) {
+  query(params: Record<string, unknown> | undefined) {
     if (typeof params !== "object") {
       throw new Error("Request.query: params must be an object");
     }
@@ -66,7 +80,7 @@ export abstract class Request<R> {
     });
     return this;
   }
-  auth(auth) {
+  auth(auth: Token<any>) {
     this._auth = auth;
     return this;
   }
@@ -74,10 +88,10 @@ export abstract class Request<R> {
     this._auth = { auth: { username, password } };
     return this;
   }
-  authAPIKey(token: string) {
+  authBearer(token: string) {
     this._auth = {
       headers: {
-        Authorization: token,
+        Authorization: `Bearer ${token}`,
       },
     };
     return this;
@@ -86,7 +100,7 @@ export abstract class Request<R> {
     this._data = data;
     return this;
   }
-  settings(settings) {
+  settings(settings: AxiosRequestConfig) {
     this._settings = settings;
     return this;
   }
@@ -130,7 +144,11 @@ export abstract class Request<R> {
     }
   }
 
-  private async _handleAPI(request, codeCatchers, canRecover401) {
+  private async _handleAPI(
+    request: () => Promise<AxiosResponse<any>>,
+    codeCatchers: CodeCatcher[],
+    canRecover401: boolean
+  ): Promise<any> {
     try {
       const { data } = await request();
       this.online();
@@ -162,24 +180,9 @@ export abstract class Request<R> {
           catcher.next(error.response && error.response.data, error);
           return Promise.reject(false);
         }
-        console.log("COULD NOT DO ", this.formatAPIError(error));
       }
 
       return Promise.reject(error);
-    }
-  }
-
-  private formatAPIError(apiError) {
-    if (apiError && apiError.request) {
-      const error = `${apiError.request._method} ${apiError.request._url}
-  -> ${(apiError.response || {}).status}:
-     Data: ${JSON.stringify((apiError.response || {}).data)}
-     Body: ${((apiError.response || {}).request || {})._response}
-`;
-
-      return error;
-    } else {
-      return apiError;
     }
   }
 
@@ -187,9 +190,9 @@ export abstract class Request<R> {
     if (!this._p) {
       this._p = this.run();
     }
-    return this._p;
+    return this._p as Promise<R>;
   }
-  private _prepareStatement(uri, params: unknown[] = [], query = {}) {
+  private _prepareStatement(uri: string, params: unknown[] = [], query = {}) {
     let queryparams = "";
     if (query) {
       queryparams =
@@ -208,12 +211,10 @@ export abstract class Request<R> {
     const preTransformUri = uri;
     params.forEach((param, i) => {
       if (!uri.match(new RegExp("\\$" + (i + 1)))) {
-        console.log(
+        throw new PreparedStatementError(
           "Too many parameters for prepared statement",
-          preTransformUri,
-          params
+          uri
         );
-        throw "Too many parameters for prepared statement";
       }
       let val = param;
       if (typeof val === "object") {
@@ -226,12 +227,10 @@ export abstract class Request<R> {
       );
     });
     if (uri.match(new RegExp("\\$"))) {
-      console.log(
+      throw new PreparedStatementError(
         "Too few parameters for prepared statement",
-        preTransformUri,
-        params
+        preTransformUri
       );
-      throw "Too few parameters for prepared statement";
     }
     return "/" + uri + queryparams;
   }
