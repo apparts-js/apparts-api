@@ -65,7 +65,6 @@ ${type.alternatives.map((alt) => createTypeFsFromType(alt)).join(",")}
       return `schema.int()${opts}`;
     case "float":
       return `schema.float()${opts}`;
-    case "bool":
     case "boolean":
       return `schema.boolean()${opts}`;
     case "string":

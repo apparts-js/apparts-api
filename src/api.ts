@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
 import { Request } from "./Request";
 
 export type ApiType = {
@@ -14,7 +14,11 @@ export const useApi = <R extends Request<any>>(
   Request: new <T>(
     uri: string,
     params: unknown[] | undefined,
-    method: (a, b, c) => Promise<T>
+    method: <Response = AxiosResponse<T>>(
+      url: string,
+      data?: any,
+      config?: AxiosRequestConfig
+    ) => Promise<Response>
   ) => R
 ): ApiType => ({
   get<T>(uri: string, params?: unknown[]) {

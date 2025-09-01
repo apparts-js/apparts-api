@@ -8,6 +8,7 @@ const app = myEndpoint.app;
 const testapi = require("./testApi");
 const { getApi } = require("./testApi");
 const { get, put, patch, post, del } = getApi(3000);
+import { PreparedStatementError } from "./errors";
 
 let server;
 beforeAll(async () => {
@@ -56,30 +57,14 @@ describe("Requests with params", () => {
     });
   });
   test("Too few parameters", async () => {
-    const consoleMock = jest.spyOn(console, "log");
-    await expect(get("params/$1/$2/$3/a", [])).rejects.toBe(
-      "Too few parameters for prepared statement"
+    await expect(get("params/$1/$2/$3/a", [])).rejects.toThrow(
+      PreparedStatementError
     );
-    expect(consoleMock.mock.calls.length).toBe(1);
-    expect(consoleMock.mock.calls[0]).toEqual([
-      "Too few parameters for prepared statement",
-      "params/$1/$2/$3/a",
-      [],
-    ]);
-    consoleMock.mockRestore();
   });
   test("Too many parameters", async () => {
-    const consoleMock = jest.spyOn(console, "log");
-    await expect(get("params/$1/$2/$3/a", [1, 2, 3, 4])).rejects.toBe(
-      "Too many parameters for prepared statement"
+    await expect(get("params/$1/$2/$3/a", [1, 2, 3, 4])).rejects.toThrow(
+      PreparedStatementError
     );
-    expect(consoleMock.mock.calls.length).toBe(1);
-    expect(consoleMock.mock.calls[0]).toEqual([
-      "Too many parameters for prepared statement",
-      "params/$1/$2/$3/a",
-      [1, 2, 3, 4],
-    ]);
-    consoleMock.mockRestore();
   });
   test("Check encoding", async () => {
     const res = await get("params/$1/$2/3/a", ["/=?&", 2]);
@@ -144,6 +129,16 @@ describe("Body params", () => {
     expect(() => get("body").data({ b: "?a=a&b=" })).toThrow(
       "GET Request cannot take data"
     );
+  });
+});
+
+describe("Error retriers", () => {
+  test("Retry a 500", async () => {
+    const res = await get("retryme").retryOn(500, 2);
+    expect(res).toBe("ok");
+  });
+  test("Retry a 500, but not often enough", async () => {
+    await expect(() => get("retryme").retryOn(500, 1)).rejects.toThrow(Error);
   });
 });
 

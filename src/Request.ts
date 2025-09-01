@@ -2,21 +2,30 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { Token } from "./Token";
 import { PreparedStatementError } from "./errors";
 
+type ErrorIdentifier = number | { error: string; status: number };
+
 type CodeCatcher = {
-  status: number | { error: string; status: number };
+  status: ErrorIdentifier;
   next: (data: any, error: unknown) => void;
 };
 
+type ErrorRetrier = {
+  status: ErrorIdentifier;
+  retryCount: number;
+  delay: number;
+};
+
 export abstract class Request<R> {
+  private _retryOn: ErrorRetrier[] = [];
   private _codeCatchers: CodeCatcher[];
   private _apiVersion: string | number;
   private _uri: string;
   private _params: unknown[];
-  private _method: <T = any, R = AxiosResponse<T>>(
+  private _method: <Response = AxiosResponse<R>>(
     url: string,
     data?: any,
     config?: AxiosRequestConfig
-  ) => Promise<R>;
+  ) => Promise<Response>;
   private _query: Record<string, unknown> | undefined;
   protected _auth;
   private _data: unknown;
@@ -27,11 +36,11 @@ export abstract class Request<R> {
   constructor(
     uri: string,
     params: unknown[] = [],
-    method: <T = any, R = AxiosResponse<T>>(
+    method: <Response = AxiosResponse<R>>(
       url: string,
       data?: any,
       config?: AxiosRequestConfig
-    ) => Promise<R>
+    ) => Promise<Response>
   ) {
     this._codeCatchers = [];
     this._apiVersion = this.getAPIVersion();
@@ -61,10 +70,7 @@ export abstract class Request<R> {
     this._query = params;
     return this;
   }
-  on<T>(
-    status: number | { error: string; status: number },
-    next: (data: T, error: unknown) => void
-  ) {
+  on<T>(status: ErrorIdentifier, next: (data: T, error: unknown) => void) {
     if (typeof status !== "number") {
       if (typeof status !== "object") {
         throw new Error("Request.on: status must be number or object");
@@ -80,11 +86,21 @@ export abstract class Request<R> {
     });
     return this;
   }
+
+  retryOn(status: ErrorIdentifier, retryCount: number, delay = 0) {
+    this._retryOn.push({
+      status,
+      retryCount,
+      delay,
+    });
+    return this;
+  }
+
   auth(auth: Token<any>) {
     this._auth = auth;
     return this;
   }
-  authPW(username: string, password: string) {
+  authBasic(username: string, password: string) {
     this._auth = { auth: { username, password } };
     return this;
   }
@@ -128,11 +144,14 @@ export abstract class Request<R> {
     try {
       const res = await this._handleAPI(
         request,
-        this._codeCatchers,
         !this._secondTry && this._auth && this._auth.renew
       );
       return res;
     } catch (e) {
+      if (e === "Retry") {
+        return await this.run();
+      }
+
       if (e === "Token invalid" && !this._secondTry) {
         this._secondTry = true;
         await this._auth.renew();
@@ -146,7 +165,6 @@ export abstract class Request<R> {
 
   private async _handleAPI(
     request: () => Promise<AxiosResponse<any>>,
-    codeCatchers: CodeCatcher[],
     canRecover401: boolean
   ): Promise<any> {
     try {
@@ -166,10 +184,19 @@ export abstract class Request<R> {
           return Promise.reject("Token invalid");
         }
 
-        const catcher = codeCatchers.find(({ status }) =>
-          typeof status === "number"
-            ? status === code
-            : status.status === code && status.error === (data || {}).error
+        const retrierer = this._retryOn.find(({ status }) =>
+          this.matchErrorIdentifier(status, code, data)
+        );
+        if (retrierer && retrierer.retryCount > 0) {
+          if (retrierer.delay > 0) {
+            await new Promise((res) => setTimeout(res, retrierer.delay));
+          }
+          retrierer.retryCount--;
+          return Promise.reject("Retry");
+        }
+
+        const catcher = this._codeCatchers.find(({ status }) =>
+          this.matchErrorIdentifier(status, code, data)
         );
 
         if (code !== 0) {
@@ -184,6 +211,17 @@ export abstract class Request<R> {
 
       return Promise.reject(error);
     }
+  }
+
+  private matchErrorIdentifier(
+    errorIdentifier: ErrorIdentifier,
+    code: number,
+    data: any
+  ) {
+    return typeof errorIdentifier === "number"
+      ? errorIdentifier === code
+      : errorIdentifier.status === code &&
+          errorIdentifier.error === (data || {}).error;
   }
 
   private _getP(): Promise<R> {

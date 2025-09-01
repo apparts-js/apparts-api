@@ -248,4 +248,23 @@ app.post(
   )
 );
 
+let tries = 0;
+app.get(
+  "/v/1/retryme",
+  prepare(
+    {
+      hasAccess: () => {},
+      receives: {},
+    },
+    async () => {
+      tries++;
+      if (tries < 3) {
+        return new HttpError(500, "Nope, try again");
+      }
+      tries = 0;
+      return "ok";
+    }
+  )
+);
+
 module.exports = { app };
