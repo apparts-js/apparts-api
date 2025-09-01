@@ -15,12 +15,12 @@ Finally, give your new =Request= class to =useApi= and export the
 functions that you recieve.
 
 #+BEGIN_SRC js
-  import {useApi, Token, Request} from "@apparts/api";
+  import { useApi, Token, Request, ApiFnParams } from "@apparts/api";
 
   const APIVERSION = 1;
   const URL = __DEV__ // eslint-disable-line no-undef
-        ? "https://devendpoint/v/"
-        : "https://prodendpoint/v/";
+    ? "https://devendpoint/v/"
+    : "https://prodendpoint/v/";
 
   const logout = () => {
     // Log out user on 401 HTTP-Error
@@ -77,13 +77,22 @@ functions that you recieve.
       // handled globally.
 
       this.on(410, () => alert("Your website is out of date, please reload it."));
-      this.on({ status: 401, error: "Token invalid" }, () => { throw "Invalid token"; });
+      this.on({ status: 401, error: "Token invalid" }, () => {
+        throw "Invalid token";
+      });
       this.on(401, logout);
       this.on(0, () => alert("We could not reach the server. Are you online?"));
     }
   }
 
-  const { get, put, patch, post, del } = useApi(MyRequest);
+  const api = useApi(MyRequest);
+
+  const get = <T>(...ps: ApiFnParams) => api.get(...ps) as unknown as MyRequest<T>,
+    put = <T>(...ps: ApiFnParams) => api.put(...ps) as unknown as MyRequest<T>,
+    patch = <T>(...ps: ApiFnParams) => api.patch(...ps) as unknown as MyRequest<T>,
+    post = <T>(...ps: ApiFnParams) => api.post(...ps) as unknown as MyRequest<T>,
+    del = <T>(...ps: ApiFnParams) => api.del(...ps) as unknown as MyRequest<T>;
+
   export { get, put, patch, post, del };
 #+END_SRC
 
