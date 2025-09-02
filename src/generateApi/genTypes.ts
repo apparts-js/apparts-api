@@ -1,5 +1,6 @@
 import { Type } from "@apparts/types";
 import { capitalize } from "./utils";
+import { GenerationOptions } from "./types";
 
 export const createTypeFsOpts = (type: Type) => {
   let code = "";
@@ -156,13 +157,7 @@ ${type.alternatives.map((alt) => `(${createTsTypeFromType(alt)})`).join(" | ")}
   }
 };
 
-export const genType = (
-  name: string,
-  type: Type,
-  options: {
-    emitNoSchema: boolean;
-  }
-) =>
+export const genType = (name: string, type: Type, options: GenerationOptions) =>
   options.emitNoSchema
     ? `
 export type ${capitalize(name)} = ${createTsTypeFromType(type)};

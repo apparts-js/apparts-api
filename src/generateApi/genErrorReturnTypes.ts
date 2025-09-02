@@ -3,6 +3,7 @@ import {
   PreparedReturnError,
   ReturnError,
   ReturnSuccess,
+  GenerationOptions,
 } from "./types";
 import { genType } from "./genTypes";
 import { nameFromString } from "./utils";
@@ -73,7 +74,7 @@ export const genErrorReturnTypes = (
   method: string,
   name: string,
   codes: Record<number, PreparedReturnError[]>,
-  options: { emitNoSchema: boolean }
+  options: GenerationOptions
 ) => {
   const typeCodes: string[] = [];
   for (const code in codes) {

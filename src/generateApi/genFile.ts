@@ -36,12 +36,14 @@ export const genFile = (api: EndpointDefinition[], options?: Options) => {
     api
       .filter(({ method }) => method !== "options")
       .map((endpoint) =>
-        genEndpoint({
-          ...endpoint,
-          assertions: endpoint.assertions || {},
-          returns: endpoint.returns || [],
-          emitNoSchema: Boolean(options?.emitNoSchema),
-        })
+        genEndpoint(
+          {
+            ...endpoint,
+            assertions: endpoint.assertions || {},
+            returns: endpoint.returns || [],
+          },
+          { emitNoSchema: Boolean(options?.emitNoSchema) }
+        )
       ),
     options
   );

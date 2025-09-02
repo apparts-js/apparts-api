@@ -61,21 +61,24 @@ const a = {
 
 describe("genEndpoint", () => {
   it("should generate endpoint function", async () => {
-    const { funcCode, path, typeCode } = genEndpoint({
-      method: "post",
-      path: "/v/1/user/venue/:venueId/payment/:paymentId/receipt",
-      assertions: {
-        params: {
-          venueId: { type: "id" },
-          paymentId: { type: "id" },
+    const { funcCode, path, typeCode } = genEndpoint(
+      {
+        method: "post",
+        path: "/v/1/user/venue/:venueId/payment/:paymentId/receipt",
+        assertions: {
+          params: {
+            venueId: { type: "id" },
+            paymentId: { type: "id" },
+          },
+          query: { uuid: { type: "uuidv4" } },
+          body: {
+            email: { type: "email" },
+          },
         },
-        query: { uuid: { type: "uuidv4" } },
-        body: {
-          email: { type: "email" },
-        },
+        returns: [{ status: 200, value: "ok" }],
       },
-      returns: [{ status: 200, value: "ok" }],
-    });
+      { emitNoSchema: false }
+    );
 
     expect(prettify(funcCode)).toBe(
       prettify(`
@@ -118,12 +121,15 @@ describe("genEndpoint", () => {
   });
 
   it("should generate endpoint function with optional assertion component", async () => {
-    const { funcCode, typeCode, path } = genEndpoint({
-      method: "post",
-      path: "/v/1/user",
-      assertions: {},
-      returns: [{ status: 200, value: "ok" }],
-    });
+    const { funcCode, typeCode, path } = genEndpoint(
+      {
+        method: "post",
+        path: "/v/1/user",
+        assertions: {},
+        returns: [{ status: 200, value: "ok" }],
+      },
+      { emitNoSchema: false }
+    );
 
     expect(prettify(funcCode)).toBe(
       prettify(`
@@ -141,17 +147,20 @@ describe("genEndpoint", () => {
   });
 
   it("should generate endpoint function with multiple returns", async () => {
-    const { funcCode, typeCode, path } = genEndpoint({
-      method: "post",
-      path: "/v/1/user",
-      assertions: {},
-      returns: [
-        { status: 200, value: "ok" },
-        { status: 200, value: "other ok" },
-        { status: 400, error: "error" },
-        { status: 400, error: "other error" },
-      ],
-    });
+    const { funcCode, typeCode, path } = genEndpoint(
+      {
+        method: "post",
+        path: "/v/1/user",
+        assertions: {},
+        returns: [
+          { status: 200, value: "ok" },
+          { status: 200, value: "other ok" },
+          { status: 400, error: "error" },
+          { status: 400, error: "other error" },
+        ],
+      },
+      { emitNoSchema: false }
+    );
 
     const typeCodePretty = prettify(typeCode);
     expect(typeCodePretty).toMatch("PostV1User400ErrorResponse");

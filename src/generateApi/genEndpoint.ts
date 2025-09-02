@@ -5,7 +5,7 @@ import {
   prepareErrors,
 } from "./genErrorReturnTypes";
 import { genType } from "./genTypes";
-import { Return, PreparedReturnError, Type } from "./types";
+import { Return, PreparedReturnError, Type, GenerationOptions } from "./types";
 import {
   capitalize,
   createPath,
@@ -52,29 +52,30 @@ on${code}${errorName}: (fn: (p: ${catchErrorTypeName}) => void) => {
   return typeCodes;
 };
 
-export const genEndpoint = ({
-  method,
-  path,
-  assertions,
-  returns,
-  emitNoSchema,
-}: /*  title,
+export const genEndpoint = (
+  {
+    method,
+    path,
+    assertions,
+    returns,
+  }: /*  title,
   description,
   options,*/
-{
-  method: string;
-  path: string;
-  assertions: {
-    query?: { [k: string]: Type };
-    body?: { [k: string]: Type };
-    params?: { [k: string]: Type };
-  };
-  returns: Return[];
-  title?: string;
-  description?: string;
-  options?: unknown;
-  emitNoSchema: boolean;
-}) => {
+  {
+    method: string;
+    path: string;
+    assertions: {
+      query?: { [k: string]: Type };
+      body?: { [k: string]: Type };
+      params?: { [k: string]: Type };
+    };
+    returns: Return[];
+    title?: string;
+    description?: string;
+    options?: unknown;
+  },
+  options: GenerationOptions
+) => {
   const {
     query: assertionsQuery = {},
     body: assertionsBody = {},
@@ -99,9 +100,9 @@ export const genEndpoint = ({
         alternatives: getSuccessReturns(returns),
         type: "oneOf",
       },
-      { emitNoSchema }
+      options
     ),
-    ...genErrorReturnTypes(method, name, errorReturnTypes, { emitNoSchema }),
+    ...genErrorReturnTypes(method, name, errorReturnTypes, options),
   ];
   const errorCatchers = genErrorCatchers(method, name, errorReturnTypes).join(
     "\n"
@@ -114,7 +115,7 @@ export const genEndpoint = ({
           keys: assertionsParams,
           type: "object",
         },
-        { emitNoSchema }
+        options
       )
     );
     funcParams.push(`params`);
@@ -128,7 +129,7 @@ export const genEndpoint = ({
           keys: assertionsBody,
           type: "object",
         },
-        { emitNoSchema }
+        options
       )
     );
 
@@ -144,7 +145,7 @@ export const genEndpoint = ({
           keys: assertionsQuery,
           type: "object",
         },
-        { emitNoSchema }
+        options
       )
     );
     funcCalls.push(`.query(query)`);

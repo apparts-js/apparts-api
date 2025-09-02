@@ -1,6 +1,8 @@
 import { Type } from "@apparts/types";
 export { Type };
 
+export type GenerationOptions = { emitNoSchema: boolean };
+
 export type PreparedReturnError = {
   status: number;
   error?: string;
