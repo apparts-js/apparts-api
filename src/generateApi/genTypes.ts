@@ -100,7 +100,74 @@ ${type.alternatives.map((alt) => createTypeFsFromType(alt)).join(",")}
   }
 };
 
-export const genType = (name: string, type: Type) => `
+export const createTsTypeFromType = (type: Type): string => {
+  if ("value" in type) {
+    return JSON.stringify(type.value);
+  }
+
+  switch (type.type) {
+    case "object":
+      if ("keys" in type) {
+        const keys = Object.keys(type.keys);
+        return `{
+${keys
+  .map(
+    (key) =>
+      `"${key}"${
+        type.keys[key].optional || "default" in type.keys[key] ? "?" : ""
+      }: ${createTsTypeFromType(type.keys[key])}`
+  )
+  .join(";")}
+}`;
+      } else {
+        return `{ [key: string]: ${createTsTypeFromType(type.values)} }`;
+      }
+    case "array":
+      return `(${createTsTypeFromType(type.items)})[]`;
+    case "oneOf":
+      return `(
+${type.alternatives.map((alt) => `(${createTsTypeFromType(alt)})`).join(" | ")}
+)`;
+    case "int":
+    case "float":
+    case "id":
+    case "date":
+    case "daytime":
+    case "time":
+      return "number";
+    case "boolean":
+      return "boolean";
+    case "string":
+    case "hex":
+    case "uuidv4":
+    case "uuid":
+    case "base64":
+    case "email":
+    case "phoneISD":
+    case "password":
+      return "string";
+    case "null":
+      return "null";
+    case "/":
+      return "any";
+
+    default:
+      throw new Error("Not supported type " + JSON.stringify(type, null, 2));
+  }
+};
+
+export const genType = (
+  name: string,
+  type: Type,
+  options: {
+    emitNoSchema: boolean;
+  }
+) =>
+  options.emitNoSchema
+    ? `
+export type ${capitalize(name)} = ${createTsTypeFromType(type)};
+`
+    : `
 export const ${name}Schema = ${createTypeFsFromType(type)};
 export type ${capitalize(name)} = schema.InferType<
   typeof ${name}Schema

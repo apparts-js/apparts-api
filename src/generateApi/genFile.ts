@@ -5,6 +5,7 @@ import { assocPath } from "ramda";
 type Options = {
   includePaths?: string[][];
   excludePaths?: string[][];
+  emitNoSchema?: boolean;
 };
 
 export const pathMatches = (paths: string[][], path: string[]) => {
@@ -39,6 +40,7 @@ export const genFile = (api: EndpointDefinition[], options?: Options) => {
           ...endpoint,
           assertions: endpoint.assertions || {},
           returns: endpoint.returns || [],
+          emitNoSchema: Boolean(options?.emitNoSchema),
         })
       ),
     options
@@ -57,7 +59,7 @@ export const genFile = (api: EndpointDefinition[], options?: Options) => {
   }
 
   return `
-import * as schema from "@apparts/types";
+${options?.emitNoSchema ? "" : `import * as schema from "@apparts/types";`}
 import { ApiType } from "@apparts/api";
 
 ${types}

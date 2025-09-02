@@ -127,4 +127,67 @@ export const createApi = (api: ApiType) => {
       `)
     );
   });
+
+  it("should generate file with ts types", async () => {
+    const file = genFile(
+      [
+        {
+          method: "post",
+          path: "/v/1/user",
+          assertions: {},
+          returns: [{ status: 200, value: "ok" }],
+          title: "Add user",
+        },
+        {
+          method: "get",
+          path: "/v/1/user",
+          assertions: {},
+          returns: [{ status: 200, value: "ok" }],
+          title: "Get user",
+        },
+        {
+          method: "get",
+          path: "/v/1/user/:userId",
+          assertions: { params: { userId: { type: "id" } } },
+          returns: [{ status: 200, value: "ok" }],
+          title: "Get user by id",
+        },
+      ],
+      { emitNoSchema: true }
+    );
+    expect(prettify(file)).toBe(
+      prettify(`
+import { ApiType } from "@apparts/api";
+
+export type PostV1UserReturns = "ok";
+export type GetV1UserReturns = "ok";
+export type GetV1UserUserIdReturns = "ok";
+export type GetV1UserUserIdParams = { userId: number };
+export const createApi = (api: ApiType) => {
+  return {
+    v1: {
+      user: {
+        post: () => {
+          const request = api.post<PostV1UserReturns>("user", []).v(1);
+          const enrichedRequest = Object.assign(request, {});
+          return enrichedRequest;
+        },
+        get: () => {
+          const request = api.get<GetV1UserReturns>("user", []).v(1);
+          const enrichedRequest = Object.assign(request, {});
+          return enrichedRequest;
+        },
+        byUserId: {
+          get: ({params}: {params: GetV1UserUserIdParams}) => {
+            const request = api.get<GetV1UserUserIdReturns>("user/$1", [params.userId]).v(1);
+            const enrichedRequest = Object.assign(request, {});
+            return enrichedRequest;
+          },
+        }
+      },
+    },
+  };
+};`)
+    );
+  });
 });

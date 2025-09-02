@@ -1,74 +1,76 @@
-import { createTypeFsFromType, genType } from "./genTypes";
+import * as types from "@apparts/types";
+import {
+  createTsTypeFromType,
+  createTypeFsFromType,
+  genType,
+} from "./genTypes";
 import { prettify } from "./prettify";
 
-describe("createTypeFsFromType", () => {
-  it("should return correct type", async () => {
-    expect(
-      prettify(
-        createTypeFsFromType({
-          //          status: 200,
-          type: "object",
-          keys: {
-            id: {
-              type: "id",
-              description: "desc",
-              //              title: "thetitle",
-              auto: true,
-              key: true,
-              readOnly: true,
-            },
-            name: {
-              type: "string",
-              description: "test desc",
-              optional: true,
-              mapped: "abc",
-            },
-            number: {
-              type: "int",
-              default: 0,
-            },
-            legalInfo: {
-              type: "object",
-              keys: {
-                UstId: { type: "int" },
-                entityName: { type: "boolean" },
-              },
-              default: () => ({ UstId: 1, entityName: true }),
-            },
-            defaultLanguage: {
-              type: "oneOf",
-              alternatives: [{ value: "de" }, { value: "en" }],
-              derived: true,
-            },
-            "allowed.OrderStates": {
-              type: "object",
-              values: {
-                type: "object",
-                keys: {
-                  order: {
-                    type: "object",
-                    optional: true,
-                    keys: {
-                      channel: {
-                        type: "array",
-                        items: {
-                          type: "oneOf",
-                          alternatives: [
-                            { value: "websocket" },
-                            { value: "pushNotification" },
-                            { value: "email" },
-                          ],
-                        },
-                      },
-                    },
-                  },
+const exampleType: types.Type = {
+  type: "object",
+  keys: {
+    id: {
+      type: "id",
+      description: "desc",
+      //              title: "thetitle",
+      auto: true,
+      key: true,
+      readOnly: true,
+    },
+    name: {
+      type: "string",
+      description: "test desc",
+      optional: true,
+      mapped: "abc",
+    },
+    number: {
+      type: "int",
+      default: 0,
+    },
+    legalInfo: {
+      type: "object",
+      keys: {
+        UstId: { type: "int" },
+        entityName: { type: "boolean" },
+      },
+      default: () => ({ UstId: 1, entityName: true }),
+    },
+    defaultLanguage: {
+      type: "oneOf",
+      alternatives: [{ value: "de" }, { value: "en" }],
+      derived: true,
+    },
+    "allowed.OrderStates": {
+      type: "object",
+      values: {
+        type: "object",
+        keys: {
+          order: {
+            type: "object",
+            optional: true,
+            keys: {
+              channel: {
+                type: "array",
+                items: {
+                  type: "oneOf",
+                  alternatives: [
+                    { value: "websocket" },
+                    { value: "pushNotification" },
+                    { value: "email" },
+                  ],
                 },
               },
             },
           },
-        })
-      )
-    ).toBe(
+        },
+      },
+    },
+  },
+};
+
+describe("createTypeFsFromType", () => {
+  it("should return correct type", async () => {
+    expect(prettify(createTypeFsFromType(exampleType))).toBe(
       //              .title("thetitle")
       prettify(`
 schema.obj({
@@ -105,18 +107,47 @@ schema.obj({
   });
 });
 
+describe("createTsTypeFromType", () => {
+  it("should return correct type", async () => {
+    expect(prettify("type A = " + createTsTypeFromType(exampleType))).toBe(
+      prettify(`
+type A = {
+        id: number;
+        name?: string;
+        number?: number;
+        legalInfo?: {
+          UstId: number;
+          entityName: boolean;
+        };
+        defaultLanguage: "de" | "en";
+        "allowed.OrderStates": {
+          [key: string]: {
+            order?: {
+              channel: ("websocket" | "pushNotification" | "email")[];
+            };
+          };
+        };
+      }`)
+    );
+  });
+});
+
 describe("genType", () => {
   it("should gen correct type code", async () => {
     expect(
       prettify(
-        genType("testParams", {
-          type: "object",
-          keys: {
-            venueId: { type: "id" },
-            orderId: { type: "id" },
-            paymentId: { type: "id" },
+        genType(
+          "testParams",
+          {
+            type: "object",
+            keys: {
+              venueId: { type: "id" },
+              orderId: { type: "id" },
+              paymentId: { type: "id" },
+            },
           },
-        })
+          { emitNoSchema: false }
+        )
       )
     ).toBe(
       prettify(`
@@ -128,6 +159,32 @@ describe("genType", () => {
 export type TestParams = schema.InferType<
   typeof testParamsSchema
 >;`)
+    );
+  });
+
+  it("should gen correct type code with only ts types", async () => {
+    expect(
+      prettify(
+        genType(
+          "testParams",
+          {
+            type: "object",
+            keys: {
+              venueId: { type: "id" },
+              orderId: { type: "id" },
+              paymentId: { type: "id" },
+            },
+          },
+          { emitNoSchema: true }
+        )
+      )
+    ).toBe(
+      prettify(`
+export type TestParams = {
+  venueId: number;
+  orderId: number;
+  paymentId: number;
+};`)
     );
   });
 });

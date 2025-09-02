@@ -72,17 +72,22 @@ export const prepareErrors = (returns: PreparedReturnError[]) => {
 export const genErrorReturnTypes = (
   method: string,
   name: string,
-  codes: Record<number, PreparedReturnError[]>
+  codes: Record<number, PreparedReturnError[]>,
+  options: { emitNoSchema: boolean }
 ) => {
   const typeCodes: string[] = [];
   for (const code in codes) {
     const codeReturns = codes[code];
     // add catch all for code
     typeCodes.push(
-      genType(`${method}${name}${code}Response`, {
-        alternatives: codeReturns.map(({ returnType }) => returnType),
-        type: "oneOf",
-      })
+      genType(
+        `${method}${name}${code}Response`,
+        {
+          alternatives: codeReturns.map(({ returnType }) => returnType),
+          type: "oneOf",
+        },
+        options
+      )
     );
 
     for (const r of codeReturns) {
@@ -93,7 +98,11 @@ export const genErrorReturnTypes = (
       // add specific returns
       const errorName = nameFromString(r.error);
       typeCodes.push(
-        genType(`${method}${name}${code}${errorName}Response`, r.returnType)
+        genType(
+          `${method}${name}${code}${errorName}Response`,
+          r.returnType,
+          options
+        )
       );
     }
   }

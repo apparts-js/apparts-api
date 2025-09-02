@@ -176,15 +176,26 @@ improve the output.
 To generate the SDK, run the following:
 
 #+BEGIN_SRC js
-import * as prettier from "prettier";
-const prettify = (src) => prettier.format(src, { parser: "typescript" });
+  import * as prettier from "prettier";
+  const prettify = (src) => prettier.format(src, { parser: "typescript" });
 
-// The API definition as output by the getApi function from @apparts/prep
-import { testApi } from "./api-description.json";
-import { genFile, EndpointDefinition } from "@apparts/api";
+  // The API definition as output by the getApi function from @apparts/prep
+  import { testApi } from "./api-description.json";
+  import { genFile, EndpointDefinition } from "@apparts/api";
 
-// Pipe to file or write to fs from here
-console.log(prettify(genFile(testApi.routes as EndpointDefinition[])));
+  // Pipe to file or write to fs from here
+  console.log(prettify(genFile(testApi.routes as EndpointDefinition[], {
+
+    // includePaths?: string[][];
+    // Can be used to only include a subset of the routes in the output
+
+    // excludePaths?: string[][];
+    // Can be used to exclude a subset of the routes from the output
+
+    // emitNoSchema?: boolean;
+    // If true, schemas will not be generated, but typescript types still will be. (default: false)
+
+  })));
 #+END_SRC
 
 

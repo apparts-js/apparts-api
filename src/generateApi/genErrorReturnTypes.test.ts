@@ -218,45 +218,50 @@ describe("prepareErrors", () => {
 
 describe("genErrorReturnTypes", () => {
   it("should generate error returns", async () => {
-    const errorReturns = genErrorReturnTypes("post", "V1User", {
-      400: [
-        {
-          status: 400,
-          error: "error",
-          returnType: {
-            type: "object",
-            keys: {
-              error: { value: "error" },
+    const errorReturns = genErrorReturnTypes(
+      "post",
+      "V1User",
+      {
+        400: [
+          {
+            status: 400,
+            error: "error",
+            returnType: {
+              type: "object",
+              keys: {
+                error: { value: "error" },
+              },
             },
           },
-        },
-        {
-          status: 400,
-          error: "other error",
-          returnType: {
-            type: "object",
-            keys: {
-              error: { value: "other error" },
+          {
+            status: 400,
+            error: "other error",
+            returnType: {
+              type: "object",
+              keys: {
+                error: { value: "other error" },
+              },
             },
           },
-        },
-        {
-          status: 400,
-          error: "Could not leave shift",
-          returnType: {
-            type: "object",
-            keys: {
-              reason: { type: "string" },
-              error: { value: "Could not leave shift" },
+          {
+            status: 400,
+            error: "Could not leave shift",
+            returnType: {
+              type: "object",
+              keys: {
+                reason: { type: "string" },
+                error: { value: "Could not leave shift" },
+              },
             },
           },
-        },
-      ],
-      402: [
-        { status: 402, returnType: { value: "str1" } },
-        { status: 402, returnType: { value: "str2" } },
-      ],
-    });
+        ],
+        402: [
+          { status: 402, returnType: { value: "str1" } },
+          { status: 402, returnType: { value: "str2" } },
+        ],
+      },
+      { emitNoSchema: false }
+    );
     expect(prettify(errorReturns.join("\n"))).toBe(
       prettify(`
 export const postV1User400ResponseSchema = schema.oneOf([

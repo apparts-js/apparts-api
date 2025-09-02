@@ -57,6 +57,7 @@ export const genEndpoint = ({
   path,
   assertions,
   returns,
+  emitNoSchema,
 }: /*  title,
   description,
   options,*/
@@ -72,6 +73,7 @@ export const genEndpoint = ({
   title?: string;
   description?: string;
   options?: unknown;
+  emitNoSchema: boolean;
 }) => {
   const {
     query: assertionsQuery = {},
@@ -91,31 +93,43 @@ export const genEndpoint = ({
 
   const errorReturnTypes = prepareErrors(getErrorReturns(returns));
   const endpointTypes = [
-    genType(`${method}${name}Returns`, {
-      alternatives: getSuccessReturns(returns),
-      type: "oneOf",
-    }),
-    ...genErrorReturnTypes(method, name, errorReturnTypes),
+    genType(
+      `${method}${name}Returns`,
+      {
+        alternatives: getSuccessReturns(returns),
+        type: "oneOf",
+      },
+      { emitNoSchema }
+    ),
+    ...genErrorReturnTypes(method, name, errorReturnTypes, { emitNoSchema }),
   ];
   const errorCatchers = genErrorCatchers(method, name, errorReturnTypes).join(
     "\n"
   );
   if (hasParams) {
     endpointTypes.push(
-      genType(`${method}${name}Params`, {
-        keys: assertionsParams,
-        type: "object",
-      })
+      genType(
+        `${method}${name}Params`,
+        {
+          keys: assertionsParams,
+          type: "object",
+        },
+        { emitNoSchema }
+      )
     );
     funcParams.push(`params`);
     funcParamTypes.push(`params: ${capMethod}${name}Params`);
   }
   if (hasBody) {
     endpointTypes.push(
-      genType(`${method}${name}Body`, {
-        keys: assertionsBody,
-        type: "object",
-      })
+      genType(
+        `${method}${name}Body`,
+        {
+          keys: assertionsBody,
+          type: "object",
+        },
+        { emitNoSchema }
+      )
     );
 
     funcCalls.push(`.data(data)`);
@@ -124,10 +138,14 @@ export const genEndpoint = ({
   }
   if (hasQuery) {
     endpointTypes.push(
-      genType(`${method}${name}Query`, {
-        keys: assertionsQuery,
-        type: "object",
-      })
+      genType(
+        `${method}${name}Query`,
+        {
+          keys: assertionsQuery,
+          type: "object",
+        },
+        { emitNoSchema }
+      )
     );
     funcCalls.push(`.query(query)`);
     funcParams.push(`query`);
