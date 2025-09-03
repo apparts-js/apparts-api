@@ -1,5 +1,4 @@
 import vitest from "@vitest/eslint-plugin";
-//import pluginJest from "eslint-plugin-jest";
 import globals from "globals";
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
